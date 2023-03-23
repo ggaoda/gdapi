@@ -1,0 +1,10 @@
+spring.application.name: gdapi-interface
+server:
+  port: 8081
+  servlet:
+    context-path: /api
+gdapi:
+  client:
+    access-key: gaoda
+    secret-key: abcdefgh
+

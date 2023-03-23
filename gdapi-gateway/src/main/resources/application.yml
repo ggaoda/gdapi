@@ -1,0 +1,31 @@
+server:
+  port: 8090
+
+spring:
+  application:
+    name: gdapi-gateway
+  cloud:
+    gateway:
+      routes:
+        - id: path_route
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/**
+      default-filters:
+        - AddResponseHeader=source, gaoda
+logging:
+  level:
+    org:
+      springframework:
+        cloud:
+          gateway: trace
+
+dubbo:
+  application:
+    name: gdapi-backend
+  protocol:
+    name: dubbo
+    port: -1
+  registry:
+    id: zk-registry
+    address: nacos://localhost:8848
