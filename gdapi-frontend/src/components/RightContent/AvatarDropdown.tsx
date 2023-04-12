@@ -1,4 +1,4 @@
-import { outLogin } from '@/services/ant-design-pro/api';
+import {currentUser, outLogin} from '@/services/ant-design-pro/api';
 import { LogoutOutlined, SettingOutlined, UserOutlined } from '@ant-design/icons';
 import { useEmotionCss } from '@ant-design/use-emotion-css';
 import { history, useModel } from '@umijs/max';
@@ -9,6 +9,7 @@ import React, { useCallback } from 'react';
 import { flushSync } from 'react-dom';
 import HeaderDropdown from '../HeaderDropdown';
 import {userLoginUsingPOST} from "@/services/gdapi-backend/userController";
+import {values} from "lodash";
 
 export type GlobalHeaderRightProps = {
   menu?: boolean;
@@ -17,7 +18,7 @@ export type GlobalHeaderRightProps = {
 
 export const AvatarName = () => {
   const { initialState } = useModel('@@initialState');
-  const { currentUser } = initialState || {};
+  // const { currentUser } = initialState || {};
   return <span className="anticon">{currentUser?.name}</span>;
 };
 
@@ -65,7 +66,9 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu, childre
         flushSync(() => {
           setInitialState((s) => ({ ...s, currentUser: undefined }));
         });
-        userLoginUsingPOST();
+        userLoginUsingPOST({
+          ...values,
+        });
         return;
       }
       history.push(`/account/${key}`);
@@ -76,7 +79,7 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu, childre
   const loading = (
     <span className={actionClassName}>
       <Spin
-        size="small"
+        size="default"
         style={{
           marginLeft: 8,
           marginRight: 8,

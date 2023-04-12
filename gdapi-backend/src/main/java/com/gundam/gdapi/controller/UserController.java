@@ -8,7 +8,6 @@ import com.gundam.gdapi.model.vo.LoginUserVO;
 import com.gundam.gdapi.model.vo.UserVO;
 import com.gundam.gdapi.annotation.AuthCheck;
 import com.gundam.gdapi.common.BaseResponse;
-import com.gundam.gdapi.config.WxOpenConfig;
 import com.gundam.gdapi.constant.UserConstant;
 import com.gundam.gdapi.exception.BusinessException;
 import com.gundam.gdapi.exception.ThrowUtils;
@@ -45,8 +44,6 @@ public class UserController {
     @Resource
     private UserService userService;
 
-    @Resource
-    private WxOpenConfig wxOpenConfig;
 
     // region 登录相关
 
@@ -64,10 +61,10 @@ public class UserController {
         String userAccount = userRegisterRequest.getUserAccount();
         String userPassword = userRegisterRequest.getUserPassword();
         String checkPassword = userRegisterRequest.getCheckPassword();
-        if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword)) {
-            return null;
-        }
-        long result = userService.userRegister(userAccount, userPassword, checkPassword);
+        String vipCode = userRegisterRequest.getVipCode();
+        if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword, vipCode)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "请求数据为空!");        }
+        long result = userService.userRegister(userAccount, userPassword, checkPassword, vipCode);
         return ResultUtils.success(result);
     }
 
@@ -92,28 +89,6 @@ public class UserController {
         return ResultUtils.success(loginUserVO);
     }
 
-//    /**
-//     * 用户登录（微信开放平台）
-//     */
-//    @GetMapping("/login/wx_open")
-//    public BaseResponse<LoginUserVO> userLoginByWxOpen(HttpServletRequest request, HttpServletResponse response,
-//            @RequestParam("code") String code) {
-//        WxOAuth2AccessToken accessToken;
-//        try {
-//            WxMpService wxService = wxOpenConfig.getWxMpService();
-//            accessToken = wxService.getOAuth2Service().getAccessToken(code);
-//            WxOAuth2UserInfo userInfo = wxService.getOAuth2Service().getUserInfo(accessToken, code);
-//            String unionId = userInfo.getUnionId();
-//            String mpOpenId = userInfo.getOpenid();
-//            if (StringUtils.isAnyBlank(unionId, mpOpenId)) {
-//                throw new BusinessException(ErrorCode.SYSTEM_ERROR, "登录失败，系统错误");
-//            }
-//            return ResultUtils.success(userService.userLoginByMpOpen(userInfo, request));
-//        } catch (Exception e) {
-//            log.error("userLoginByWxOpen error", e);
-//            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "登录失败，系统错误");
-//        }
-//    }
 
     /**
      * 用户注销

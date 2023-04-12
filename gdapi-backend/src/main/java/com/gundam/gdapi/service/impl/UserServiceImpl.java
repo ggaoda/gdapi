@@ -19,6 +19,8 @@ import com.gundam.gdapi.service.UserService;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 
@@ -43,28 +45,47 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private static final String SALT = "gaoda";
 
     @Override
-    public long userRegister(String userAccount, String userPassword, String checkPassword) {
+    public long userRegister(String userAccount, String userPassword, String checkPassword, String vipCode) {
         // 1. 校验
         if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword)) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空!");
         }
         if (userAccount.length() < 4) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户账号过短");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户账号长度过短!");
         }
         if (userPassword.length() < 8 || checkPassword.length() < 8) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户密码过短");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户密码过短!");
         }
+        if (vipCode.length() > 5){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "vip编号过长!");
+        }
+
+        //账户不能包含特殊字符
+        String regExp = "^[\\w_]{6,20}$";
+        Matcher matcher = Pattern.compile(regExp).matcher(userAccount);
+        if (!matcher.find()){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"账户不能包含特殊字符!");
+        }
+
         // 密码和校验密码相同
         if (!userPassword.equals(checkPassword)) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "两次输入的密码不一致");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "两次输入的密码不一致!");
         }
+
         synchronized (userAccount.intern()) {
             // 账户不能重复
-            QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-            queryWrapper.eq("userAccount", userAccount);
-            long count = this.baseMapper.selectCount(queryWrapper);
-            if (count > 0) {
-                throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号重复");
+            QueryWrapper<User> queryWrapper1 = new QueryWrapper<>();
+            queryWrapper1.eq("userAccount", userAccount);
+            long count1 = this.baseMapper.selectCount(queryWrapper1);
+            if (count1 > 0) {
+                throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号重复!");
+            }
+            // vip编号不能重复
+            QueryWrapper<User> queryWrapper2 = new QueryWrapper<>();
+            queryWrapper2.eq("vipCode", vipCode);
+            long count2 = this.baseMapper.selectCount(queryWrapper2);
+            if (count2 > 0){
+                throw new BusinessException(ErrorCode.PARAMS_ERROR,"vip编号不能重复!");
             }
             // 2. 加密
             String encryptPassword = DigestUtils.md5DigestAsHex((SALT + userPassword).getBytes());
@@ -114,37 +135,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return this.getLoginUserVO(user);
     }
 
-//    @Override
-//    public LoginUserVO userLoginByMpOpen(WxOAuth2UserInfo wxOAuth2UserInfo, HttpServletRequest request) {
-//        String unionId = wxOAuth2UserInfo.getUnionId();
-//        String mpOpenId = wxOAuth2UserInfo.getOpenid();
-//        // 单机锁
-//        synchronized (unionId.intern()) {
-//            // 查询用户是否已存在
-//            QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-//            queryWrapper.eq("unionId", unionId);
-//            User user = this.getOne(queryWrapper);
-//            // 被封号，禁止登录
-//            if (user != null && UserRoleEnum.BAN.getValue().equals(user.getRole())) {
-//                throw new BusinessException(ErrorCode.FORBIDDEN_ERROR, "该用户已被封，禁止登录");
-//            }
-//            // 用户不存在则创建
-//            if (user == null) {
-//                user = new User();
-//                user.setUnionId(unionId);
-//                user.setMpOpenId(mpOpenId);
-//                user.setUserAvatar(wxOAuth2UserInfo.getHeadImgUrl());
-//                user.setUserName(wxOAuth2UserInfo.getNickname());
-//                boolean result = this.save(user);
-//                if (!result) {
-//                    throw new BusinessException(ErrorCode.SYSTEM_ERROR, "登录失败");
-//                }
-//            }
-//            // 记录用户的登录态
-//            request.getSession().setAttribute(UserConstant.USER_LOGIN_STATE, user);
-//            return getLoginUserVO(user);
-//        }
-//    }
+
 
     /**
      * 获取当前登录用户

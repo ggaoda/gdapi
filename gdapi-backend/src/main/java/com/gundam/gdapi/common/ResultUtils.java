@@ -3,6 +3,7 @@ package com.gundam.gdapi.common;
 /**
  * 返回工具类
  *
+ * @author Gundam
  */
 public class ResultUtils {
 

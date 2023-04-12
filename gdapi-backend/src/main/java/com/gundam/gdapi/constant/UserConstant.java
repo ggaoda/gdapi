@@ -14,19 +14,19 @@ public interface UserConstant {
     //  region 权限
 
     /**
-     * 默认角色
+     * 默认角色 -- 0
      */
-    String DEFAULT_ROLE = "user";
+    int DEFAULT_ROLE = 0;
 
     /**
-     * 管理员角色
+     * 管理员角色 -- 1
      */
     int ADMIN_ROLE = 1;
 
     /**
-     * 被封号
+     * 被封号 -- -1
      */
-    String BAN_ROLE = "ban";
+    int BAN_ROLE = -1;
 
     // endregion
 }
