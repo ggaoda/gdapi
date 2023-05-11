@@ -14,11 +14,10 @@ import java.lang.annotation.Target;
 public @interface AuthCheck {
 
 
-
     /**
      * 必须有某个角色
+     * 默认是 0 代表普通用户
      *
-     * @return
      */
     int mustRole() default 0;
 

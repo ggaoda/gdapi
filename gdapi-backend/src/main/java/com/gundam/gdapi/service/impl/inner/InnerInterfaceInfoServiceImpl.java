@@ -11,6 +11,10 @@ import org.apache.dubbo.config.annotation.DubboService;
 
 import javax.annotation.Resource;
 
+/**
+ * Dubbo调用远程服务,从数据库中查询接口信息
+ * @author Gundam
+ */
 @DubboService
 public class InnerInterfaceInfoServiceImpl implements InnerInterfaceInfoService {
 

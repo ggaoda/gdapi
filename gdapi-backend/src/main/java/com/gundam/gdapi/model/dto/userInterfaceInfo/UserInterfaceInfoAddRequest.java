@@ -1,15 +1,13 @@
 package com.gundam.gdapi.model.dto.userInterfaceInfo;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
+
 import lombok.Data;
 
 import java.io.Serializable;
 
 /**
  * 创建请求
- *
+ * @author Gundam
  */
 @Data
 public class UserInterfaceInfoAddRequest implements Serializable {

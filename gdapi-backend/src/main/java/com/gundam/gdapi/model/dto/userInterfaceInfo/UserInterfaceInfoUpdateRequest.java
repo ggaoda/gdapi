@@ -6,7 +6,7 @@ import java.io.Serializable;
 
 /**
  * 更新请求
- *
+ * @author Gundam
  */
 @Data
 public class UserInterfaceInfoUpdateRequest implements Serializable {

@@ -2,7 +2,7 @@ package com.gundam.gdapi.constant;
 
 /**
  * 用户常量
- *
+ * @author Gundam
  */
 public interface UserConstant {
 

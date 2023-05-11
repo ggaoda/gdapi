@@ -1,8 +1,5 @@
 package com.gundam.gdapi.model.dto.userInterfaceInfo;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.gundam.gdapi.common.PageRequest;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -11,7 +8,7 @@ import java.io.Serializable;
 
 /**
  * 查询请求
- *
+ * @author Gundam
  */
 @EqualsAndHashCode(callSuper = true)
 @Data

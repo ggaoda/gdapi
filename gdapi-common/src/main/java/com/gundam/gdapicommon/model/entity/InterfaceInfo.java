@@ -9,6 +9,7 @@ import java.util.Date;
 /**
  * 接口信息表
  * @TableName interface_info
+ * @author Gundam
  */
 @TableName(value ="interface_info")
 @Data

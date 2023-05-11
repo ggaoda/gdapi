@@ -4,10 +4,9 @@ import java.io.Serializable;
 import lombok.Data;
 
 /**
- * 用户更新请求
+ * 用户更新请求(管理员)
  *
- * @author <a href="https://github.com/liyupi">程序员鱼皮</a>
- * @from <a href="https://yupi.icu">编程导航知识星球</a>
+ * @author Gundam
  */
 @Data
 public class UserUpdateRequest implements Serializable {
@@ -26,10 +25,6 @@ public class UserUpdateRequest implements Serializable {
      */
     private String userAvatar;
 
-    /**
-     * 简介
-     */
-    private String userProfile;
 
     /**
      * 用户角色：user/admin/ban

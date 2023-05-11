@@ -31,26 +31,19 @@ public class AuthInterceptor {
 
     /**
      * 执行拦截
-     *
+     * 拦截器---鉴权
      * @param joinPoint
      * @param authCheck
      * @return
      */
     @Around("@annotation(authCheck)")
     public Object doInterceptor(ProceedingJoinPoint joinPoint, AuthCheck authCheck) throws Throwable {
-//        List<String> anyRole = Arrays.stream(authCheck.anyRole()).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         Integer mustRole = authCheck.mustRole();
         RequestAttributes requestAttributes = RequestContextHolder.currentRequestAttributes();
         HttpServletRequest request = ((ServletRequestAttributes) requestAttributes).getRequest();
         // 当前登录用户
         User loginUser = userService.getLoginUser(request);
-//        //拥有任意权限即通过
-//        if (CollectionUtils.isNotEmpty(anyRole)){
-//            Integer userRole = loginUser.getRole();
-//            if (!anyRole.contains(userRole)){
-//                throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
-//            }
-//        }
+
         // 必须有该权限才通过
         if (mustRole != null) {
             UserRoleEnum mustUserRoleEnum = UserRoleEnum.getEnumByValue(mustRole);

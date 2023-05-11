@@ -12,7 +12,7 @@ import javax.servlet.http.HttpServletRequest;
 
 /**
  * 用户服务
- *
+ * @author Gundam
  */
 public interface UserService extends IService<User> {
 
@@ -54,18 +54,18 @@ public interface UserService extends IService<User> {
     User getLoginUserPermitNull(HttpServletRequest request);
 
     /**
-     * 是否为管理员
+     * 判断是否为管理员
      *
-     * @param request
-     * @return
+     * @param request 请求
+     * @return 是否
      */
     boolean isAdmin(HttpServletRequest request);
 
     /**
      * 是否为管理员
      *
-     * @param user
-     * @return
+     * @param user 用户
+     * @return  是否
      */
     boolean isAdmin(User user);
 
@@ -93,7 +93,7 @@ public interface UserService extends IService<User> {
     UserVO getUserVO(User user);
 
     /**
-     * 获取脱敏的用户信息
+     * 获取脱敏的用户信息列表
      *
      * @param userList
      * @return

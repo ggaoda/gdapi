@@ -4,7 +4,7 @@ import { LinkOutlined } from '@ant-design/icons';
 import { SettingDrawer } from '@ant-design/pro-components';
 import type { RunTimeLayoutConfig } from '@umijs/max';
 import { history, Link } from '@umijs/max';
-import { AvatarDropdown, AvatarName } from './components/RightContent/AvatarDropdown';
+import {AvatarDropdown, AvatarName} from './components/RightContent/AvatarDropdown';
 import { errorConfig } from './requestErrorConfig';
 import {getLoginUserUsingGET} from "@/services/gdapi-backend/userController";
 const isDev = process.env.NODE_ENV === 'development';
@@ -37,14 +37,18 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
   return {
     actionsRender: () => [<Question key="doc" />],
     avatarProps: {
-      src: initialState?.loginUser?.userAvatar,
+      src: initialState?.loginUser?.avatarUrl,
       title: <AvatarName />,
       render: (_, avatarChildren) => {
-        return <AvatarDropdown>{avatarChildren}</AvatarDropdown>;
+        return <AvatarDropdown>{avatarChildren}</AvatarDropdown>
       },
+      // render: (_, avatarChildren) => {
+      //   return <AvatarDropdown>{avatarChildren}</AvatarDropdown>;
+      // },
+
     },
     waterMarkProps: {
-      content: initialState?.loginUser?.userName,
+      content: initialState?.loginUser?.username,
     },
     footerRender: () => <Footer />,
     onPageChange: () => {

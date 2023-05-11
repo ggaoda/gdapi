@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 
 /**
  * 接口状态信息枚举
- *
+ * @author Gundam
  */
 public enum InterfaceInfoStatusEnum {
 

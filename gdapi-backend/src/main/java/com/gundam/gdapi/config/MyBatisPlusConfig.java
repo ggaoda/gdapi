@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
 
 /**
  * MyBatis Plus 配置
- *
+ * @author Gundam
  */
 @Configuration
 @MapperScan("com.gundam.springbootinit.mapper")

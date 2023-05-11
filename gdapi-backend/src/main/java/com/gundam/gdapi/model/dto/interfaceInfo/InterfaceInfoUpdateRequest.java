@@ -1,4 +1,4 @@
-package com.gundam.gdapi.model.dto.interfaceinfo;
+package com.gundam.gdapi.model.dto.interfaceInfo;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;

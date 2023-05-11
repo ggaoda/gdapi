@@ -242,13 +242,12 @@ declare namespace API {
   };
 
   type LoginUserVO = {
+    avatarUrl?: string;
     createTime?: string;
     id?: number;
     role?: number;
     updateTime?: string;
-    userAvatar?: string;
-    userName?: string;
-    userProfile?: string;
+    username?: string;
   };
 
   type OrderItem = {
@@ -368,26 +367,23 @@ declare namespace API {
   type UserQueryRequest = {
     current?: number;
     id?: number;
-    mpOpenId?: string;
     pageSize?: number;
     role?: number;
     sortField?: string;
     sortOrder?: string;
-    unionId?: string;
     userName?: string;
-    userProfile?: string;
   };
 
   type UserRegisterRequest = {
     checkPassword?: string;
     userAccount?: string;
     userPassword?: string;
+    vipCode?: string;
   };
 
   type UserUpdateMyRequest = {
     userAvatar?: string;
     userName?: string;
-    userProfile?: string;
   };
 
   type UserUpdateRequest = {
@@ -395,15 +391,13 @@ declare namespace API {
     role?: number;
     userAvatar?: string;
     userName?: string;
-    userProfile?: string;
   };
 
   type UserVO = {
+    avatarUrl?: string;
     createTime?: string;
     id?: number;
     role?: number;
-    userAvatar?: string;
-    userName?: string;
-    userProfile?: string;
+    username?: string;
   };
 }

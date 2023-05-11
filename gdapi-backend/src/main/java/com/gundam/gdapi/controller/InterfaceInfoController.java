@@ -6,10 +6,10 @@ import com.gundam.gdapi.annotation.AuthCheck;
 import com.gundam.gdapi.common.*;
 import com.gundam.gdapi.constant.CommonConstant;
 import com.gundam.gdapi.exception.BusinessException;
-import com.gundam.gdapi.model.dto.interfaceinfo.InterfaceInfoAddRequest;
-import com.gundam.gdapi.model.dto.interfaceinfo.InterfaceInfoInvokeRequest;
-import com.gundam.gdapi.model.dto.interfaceinfo.InterfaceInfoQueryRequest;
-import com.gundam.gdapi.model.dto.interfaceinfo.InterfaceInfoUpdateRequest;
+import com.gundam.gdapi.model.dto.interfaceInfo.InterfaceInfoAddRequest;
+import com.gundam.gdapi.model.dto.interfaceInfo.InterfaceInfoInvokeRequest;
+import com.gundam.gdapi.model.dto.interfaceInfo.InterfaceInfoQueryRequest;
+import com.gundam.gdapi.model.dto.interfaceInfo.InterfaceInfoUpdateRequest;
 import com.gundam.gdapi.model.enums.InterfaceInfoStatusEnum;
 import com.gundam.gdapi.service.InterfaceInfoService;
 import com.gundam.gdapi.service.UserService;
@@ -27,7 +27,6 @@ import java.util.List;
 
 /**
  * 接口管理
- *
  * @author Gundam
  */
 @RestController
@@ -50,7 +49,7 @@ public class InterfaceInfoController {
     // region 增删改查
 
     /**
-     * 创建
+     * 创建接口
      *
      * @param interfaceInfoAddRequest
      * @param request
@@ -76,7 +75,7 @@ public class InterfaceInfoController {
     }
 
     /**
-     * 删除
+     * 删除接口
      *
      * @param deleteRequest
      * @param request
@@ -104,7 +103,7 @@ public class InterfaceInfoController {
 
 
     /**
-     * 更新
+     * 更新接口
      *
      * @param interfaceInfoUpdateRequest
      * @param request
@@ -136,7 +135,7 @@ public class InterfaceInfoController {
     }
 
     /**
-     * 发布
+     * 发布接口
      *
      * @param idRequest
      * @param request
@@ -163,6 +162,7 @@ public class InterfaceInfoController {
         if (StringUtils.isBlank(userName)){
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "接口验证失败!");
         }
+        // 更新数据库中的接口状态
         InterfaceInfo interfaceInfo = new InterfaceInfo();
         interfaceInfo.setId(id);
         interfaceInfo.setStatus(InterfaceInfoStatusEnum.ONLINE.getValue());
@@ -173,7 +173,7 @@ public class InterfaceInfoController {
     }
 
     /**
-     * 下线
+     * 下线接口
      *
      * @param idRequest
      * @param request
@@ -192,7 +192,7 @@ public class InterfaceInfoController {
         if (oldInterfaceInfo == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
         }
-
+        // 更新接口状态
         InterfaceInfo interfaceInfo = new InterfaceInfo();
         interfaceInfo.setId(id);
         interfaceInfo.setStatus(InterfaceInfoStatusEnum.OFFLINE.getValue());
@@ -226,6 +226,7 @@ public class InterfaceInfoController {
         if (oldInterfaceInfo.getStatus() == InterfaceInfoStatusEnum.OFFLINE.getValue()){
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "接口已关闭");
         }
+        // 测试
         User loginUser = userService.getLoginUser(request);
         String accessKey = loginUser.getAccessKey();
         String secretKey = loginUser.getSecretKey();
@@ -285,6 +286,7 @@ public class InterfaceInfoController {
         }
         InterfaceInfo interfaceInfoQuery = new InterfaceInfo();
         BeanUtils.copyProperties(interfaceInfoQueryRequest, interfaceInfoQuery);
+
         long current = interfaceInfoQueryRequest.getCurrent();
         long size = interfaceInfoQueryRequest.getPageSize();
         String sortField = interfaceInfoQueryRequest.getSortField();

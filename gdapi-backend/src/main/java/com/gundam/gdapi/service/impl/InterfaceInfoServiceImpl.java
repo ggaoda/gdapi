@@ -21,18 +21,18 @@ public class InterfaceInfoServiceImpl extends ServiceImpl<InterfaceInfoMapper, I
 
     @Override
     public void validInterfaceInfo(InterfaceInfo interfaceInfo, boolean add) {
-     Long id = interfaceInfo.getId();
+//     Long id = interfaceInfo.getId();
      String name = interfaceInfo.getName();
-     String description = interfaceInfo.getDescription();
-     String url = interfaceInfo.getUrl();
-     String requestHeader = interfaceInfo.getRequestHeader();
-     String responseHeader = interfaceInfo.getResponseHeader();
-     Integer status = interfaceInfo.getStatus();
-     String method = interfaceInfo.getMethod();
-     Long userId = interfaceInfo.getUserId();
-     Date createTime = interfaceInfo.getCreateTime();
-     Date updateTime = interfaceInfo.getUpdateTime();
-     Integer isDeleted = interfaceInfo.getIsDeleted();
+//     String description = interfaceInfo.getDescription();
+//     String url = interfaceInfo.getUrl();
+//     String requestHeader = interfaceInfo.getRequestHeader();
+//     String responseHeader = interfaceInfo.getResponseHeader();
+//     Integer status = interfaceInfo.getStatus();
+//     String method = interfaceInfo.getMethod();
+//     Long userId = interfaceInfo.getUserId();
+//     Date createTime = interfaceInfo.getCreateTime();
+//     Date updateTime = interfaceInfo.getUpdateTime();
+//     Integer isDeleted = interfaceInfo.getIsDeleted();
 
         /**
          * 校验名称
@@ -42,6 +42,7 @@ public class InterfaceInfoServiceImpl extends ServiceImpl<InterfaceInfoMapper, I
                 throw new BusinessException(ErrorCode.PARAMS_ERROR);
             }
         }
+
         if (StringUtils.isNotBlank(name) && name.length() > 50){
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "名称过长!");
         }

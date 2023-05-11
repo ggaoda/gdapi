@@ -5,6 +5,7 @@ import com.gundam.gdapicommon.model.entity.User;
 
 /**
  * 用户服务
+ * @author Gundam
  */
 public interface InnerUserService {
 

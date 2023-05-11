@@ -122,7 +122,7 @@ public class UserController {
     // region 增删改查
 
     /**
-     * 创建用户
+     * 创建用户(仅管理员)
      *
      * @param userAddRequest
      * @param request
@@ -137,12 +137,12 @@ public class UserController {
         User user = new User();
         BeanUtils.copyProperties(userAddRequest, user);
         boolean result = userService.save(user);
-        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR); //添加失败
         return ResultUtils.success(user.getId());
     }
 
     /**
-     * 删除用户
+     * 删除用户(仅管理员)
      *
      * @param deleteRequest
      * @param request
@@ -159,7 +159,7 @@ public class UserController {
     }
 
     /**
-     * 更新用户
+     * 更新用户(仅管理员)
      *
      * @param userUpdateRequest
      * @param request

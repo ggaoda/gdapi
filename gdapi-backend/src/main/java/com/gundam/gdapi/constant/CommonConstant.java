@@ -2,6 +2,7 @@ package com.gundam.gdapi.constant;
 
 /**
  * 通用常量
+ *
  * @author Gundam
  */
 public interface CommonConstant {
@@ -15,5 +16,10 @@ public interface CommonConstant {
      * 降序
      */
     String SORT_ORDER_DESC = " descend";
-    
+
+    /**
+     * 盐值 - 混淆密码
+     */
+    String SALT = "gaoda";
+
 }

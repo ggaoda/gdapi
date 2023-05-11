@@ -8,8 +8,7 @@ import type { MenuInfo } from 'rc-menu/lib/interface';
 import React, { useCallback } from 'react';
 import { flushSync } from 'react-dom';
 import HeaderDropdown from '../HeaderDropdown';
-import {userLoginUsingPOST} from "@/services/gdapi-backend/userController";
-import {values} from "lodash";
+import {userLogoutUsingPOST} from "@/services/gdapi-backend/userController";
 
 export type GlobalHeaderRightProps = {
   menu?: boolean;
@@ -18,8 +17,8 @@ export type GlobalHeaderRightProps = {
 
 export const AvatarName = () => {
   const { initialState } = useModel('@@initialState');
-  // const { currentUser } = initialState || {};
-  return <span className="anticon">{currentUser?.name}</span>;
+   // const { currentUser } = initialState || {};
+  return <span className="anticon">{initialState?.loginUser?.username}</span>;
 };
 
 export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu, children }) => {
@@ -27,7 +26,7 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu, childre
    * 退出登录，并且将当前的 url 保存
    */
   const loginOut = async () => {
-    await outLogin();
+    await userLogoutUsingPOST();
     const { search, pathname } = window.location;
     const urlParams = new URL(window.location.href).searchParams;
     /** 此方法会跳转到 redirect 参数所在的位置 */
@@ -64,11 +63,12 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu, childre
       const { key } = event;
       if (key === 'logout') {
         flushSync(() => {
-          setInitialState((s) => ({ ...s, currentUser: undefined }));
+          setInitialState((s) => ({ ...s, loginUser: undefined }));
         });
-        userLoginUsingPOST({
-          ...values,
-        });
+        loginOut();
+        // userLoginUsingPOST({
+        //   ...values,
+        // });
         return;
       }
       history.push(`/account/${key}`);
@@ -92,36 +92,38 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu, childre
     return loading;
   }
 
-  const { currentUser } = initialState;
+  const { loginUser } = initialState;
 
-  if (!currentUser || !currentUser.name) {
+  if (!loginUser || !loginUser.username) {
     return loading;
   }
 
+
   const menuItems = [
-    ...(menu
-      ? [
-          {
-            key: 'center',
-            icon: <UserOutlined />,
-            label: '个人中心',
-          },
-          {
-            key: 'settings',
-            icon: <SettingOutlined />,
-            label: '个人设置',
-          },
-          {
-            type: 'divider' as const,
-          },
-        ]
-      : []),
+    // ...(menu
+    //   ? [
+    //       {
+    //         key: 'center',
+    //         icon: <UserOutlined />,
+    //         label: '个人中心',
+    //       },
+    //       {
+    //         key: 'settings',
+    //         icon: <SettingOutlined />,
+    //         label: '个人设置',
+    //       },
+    //       {
+    //         type: 'divider' as const,
+    //       },
+    //     ]
+    //   : []),
     {
       key: 'logout',
       icon: <LogoutOutlined />,
       label: '退出登录',
     },
   ];
+
 
   return (
     <HeaderDropdown
@@ -135,3 +137,4 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu, childre
     </HeaderDropdown>
   );
 };
+

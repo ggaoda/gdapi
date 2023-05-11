@@ -6,7 +6,6 @@ import lombok.Data;
 
 /**
  * 已登录用户视图（脱敏）
- *
  * @author Gundam
  **/
 @Data
@@ -20,17 +19,13 @@ public class LoginUserVO implements Serializable {
     /**
      * 用户昵称
      */
-    private String userName;
+    private String username;
 
     /**
      * 用户头像
      */
-    private String userAvatar;
+    private String avatarUrl;
 
-    /**
-     * 用户简介
-     */
-    private String userProfile;
 
     /**
      * 用户角色：user/admin/ban
