@@ -59,7 +59,7 @@ public class AnalysisController {
         List<InterfaceInfoVO> interfaceInfoVOList = list.stream().map(interfaceInfo -> {
             InterfaceInfoVO interfaceInfoVO = new InterfaceInfoVO();
             BeanUtils.copyProperties(interfaceInfo, interfaceInfoVO);
-            //              从用户-接口信息中         根据id查出接口(List)   获取首个   获得总调用次数
+            //              从用户-接口信息中         根据id查出接口(List)   获取首个(因为可能有多个)   获得总调用次数
             int totalNum = interfaceInfoIdObjMap.get(interfaceInfo.getId()).get(0).getTotalNum();
             interfaceInfoVO.setTotalNum(totalNum); //赋给接口VO
             return interfaceInfoVO; //返回数量

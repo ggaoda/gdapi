@@ -11,16 +11,18 @@ import {
 import {
   LoginForm,
   ProFormCaptcha,
-  ProFormCheckbox,
   ProFormText,
 } from '@ant-design/pro-components';
 import { useEmotionCss } from '@ant-design/use-emotion-css';
-import { Helmet, history, useModel } from '@umijs/max';
-import { Alert, message, Tabs } from 'antd';
+import {Helmet, history, Link, useModel} from '@umijs/max';
+import {Alert, Divider, message, Tabs} from 'antd';
 import React, { useState } from 'react';
 import { flushSync } from 'react-dom';
 import Settings from '../../../../config/defaultSettings';
 import {userLoginUsingPOST} from "@/services/gdapi-backend/userController";
+import {AO_TE_MAN} from "@/constant";
+
+//几个登录按钮
 const ActionIcons = () => {
   const langClassName = useEmotionCss(({ token }) => {
     return {
@@ -43,6 +45,7 @@ const ActionIcons = () => {
     </>
   );
 };
+
 const Lang = () => {
   const langClassName = useEmotionCss(({ token }) => {
     return {
@@ -111,7 +114,9 @@ const Login: React.FC = () => {
         setInitialState({
           loginUser: res.data
         });
-        return;
+        const userToken = res.data.userToken.toString();
+        sessionStorage.setItem("token", userToken);
+        //return;
       }
 
     } catch (error) {
@@ -140,9 +145,9 @@ const Login: React.FC = () => {
             minWidth: 280,
             maxWidth: '75vw',
           }}
-          logo={<img alt="logo" src="/logo.svg" />}
-          title="Ant Design"
-          subTitle={'Ant Design 是西湖区最具影响力的 Web 设计规范'}
+          logo={<img alt="logo" src="/cute.svg" />}
+          title="GDApi开放平台"
+          subTitle={' '}
           initialValues={{
             autoLogin: true,
           }}
@@ -158,7 +163,7 @@ const Login: React.FC = () => {
             items={[
               {
                 key: 'account',
-                label: '账户密码登录',
+                label: '账号密码登录',
               },
               {
                 key: 'mobile',
@@ -168,7 +173,7 @@ const Login: React.FC = () => {
           />
 
           {status === 'error' && loginType === 'account' && (
-            <LoginMessage content={'错误的用户名和密码(admin/ant.design)'} />
+            <LoginMessage content={'错误的账号和密码'} />
           )}
           {type === 'account' && (
             <>
@@ -178,11 +183,11 @@ const Login: React.FC = () => {
                   size: 'large',
                   prefix: <UserOutlined />,
                 }}
-                placeholder={'用户名: admin or user'}
+                placeholder={'账号:'}
                 rules={[
                   {
                     required: true,
-                    message: '用户名是必填项！',
+                    message: '账号是必填项！',
                   },
                 ]}
               />
@@ -192,12 +197,17 @@ const Login: React.FC = () => {
                   size: 'large',
                   prefix: <LockOutlined />,
                 }}
-                placeholder={'密码: ant.design'}
+                placeholder={'密码:'}
                 rules={[
                   {
                     required: true,
                     message: '密码是必填项！',
                   },
+                  {
+                    min: 8,
+                    type: 'string',
+                    message: '密码长度不能小于8! ',
+                  }
                 ]}
               />
             </>
@@ -263,15 +273,19 @@ const Login: React.FC = () => {
               marginBottom: 24,
             }}
           >
-            <ProFormCheckbox noStyle name="autoLogin">
-              自动登录
-            </ProFormCheckbox>
+
+            <Divider></Divider>
+            <Link to = "/user/register">新用户注册</Link>
+            <Divider  type={"vertical"}></Divider>
             <a
               style={{
                 float: 'right',
               }}
+              href={AO_TE_MAN}
+
+              target={"_blank"} rel="noreferrer"
             >
-              忘记密码 ?
+              忘记密码请找奥特曼
             </a>
           </div>
         </LoginForm>

@@ -1,6 +1,8 @@
 package com.gundam.gdapi.service.impl;
 
+import cn.hutool.core.lang.UUID;
 import cn.hutool.core.util.RandomUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.digest.DigestUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
@@ -19,19 +21,25 @@ import com.gundam.gdapi.service.UserService;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 
+import com.gundam.gdapi.utils.UserHolder;
 import com.gundam.gdapicommon.model.entity.User;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
 import static com.gundam.gdapi.constant.CommonConstant.SALT;
+import static com.gundam.gdapi.constant.UserConstant.*;
 
 /**
  * 用户服务实现
@@ -40,6 +48,10 @@ import static com.gundam.gdapi.constant.CommonConstant.SALT;
 @Service
 @Slf4j
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
+
+
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
 
     @Override
     public long userRegister(String userAccount, String userPassword, String checkPassword, String vipCode) {
@@ -128,8 +140,27 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户不存在或密码错误");
         }
         // 3. 记录用户的登录态
-        request.getSession().setAttribute(UserConstant.USER_LOGIN_STATE, user);
-        return this.getLoginUserVO(user);
+        HttpSession session = request.getSession();
+        session.setAttribute(UserConstant.USER_LOGIN_STATE, user);
+
+        LoginUserVO loginUserVO = new LoginUserVO();
+        BeanUtils.copyProperties(user, loginUserVO);
+
+        //生成token
+        String token = UUID.randomUUID().toString();;
+        //加盐生成tokenKey
+        String tokenKey = LOGIN_USER_KEY + SALT + token + loginUserVO.getId();
+
+        session.setAttribute("token", tokenKey);
+
+        //将用户信息保存在redis
+        String id = String.valueOf(loginUserVO.getId());
+        stringRedisTemplate.opsForValue().set(tokenKey, id);
+        stringRedisTemplate.expire(tokenKey, LOGIN_USER_TTL, TimeUnit.MINUTES); //设置过期时间
+
+        loginUserVO.setUserToken(token);
+
+        return loginUserVO;
     }
 
 
@@ -146,10 +177,26 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         Object userObj = request.getSession().getAttribute(UserConstant.USER_LOGIN_STATE);
         User currentUser = (User) userObj;
         if (currentUser == null || currentUser.getId() == null) {
-            throw   new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+            throw  new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
         }
+
+        //从请求头中获取token
+        String token = request.getHeader("x-auth-token");
+        if (StrUtil.isBlank(token)) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
+
+        String userToken = SALT + token + currentUser.getId();
+        String tokenKey = LOGIN_USER_KEY + userToken;
+
+        String userId = stringRedisTemplate.opsForValue().get(tokenKey);
+        if (StrUtil.isEmpty(userId)) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
+
+
         // 从数据库查询（追求性能的话可以注释，直接走缓存）
-        long userId = currentUser.getId();
+        //long userId = currentUser.getId();
         currentUser = this.getById(userId);
         if (currentUser == null) {
             throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
@@ -171,9 +218,30 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (currentUser == null || currentUser.getId() == null) {
             return null;
         }
+
+        //从请求头中获取token
+        String token = request.getHeader("x-auth-token");
+        if (StrUtil.isBlank(token)) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
+
+        String userToken = SALT + token + currentUser.getId();
+        String tokenKey = LOGIN_USER_KEY + userToken;
+
+        String userId = stringRedisTemplate.opsForValue().get(tokenKey);
+        if (StrUtil.isEmpty(userId)) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
+
         // 从数据库查询（追求性能的话可以注释，直接走缓存）
-        long userId = currentUser.getId();
-        return this.getById(userId);
+        //long userId = currentUser.getId();
+        currentUser = this.getById(userId);
+        if (currentUser == null) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
+        request.getSession().setAttribute(USER_LOGIN_STATE, currentUser);
+        //return this.getById(userId);
+        return currentUser;
     }
 
     /**
@@ -202,11 +270,24 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      */
     @Override
     public boolean userLogout(HttpServletRequest request) {
-        if (request.getSession().getAttribute(UserConstant.USER_LOGIN_STATE) == null) {
-            throw new BusinessException(ErrorCode.OPERATION_ERROR, "未登录");
+        try {
+            if (request.getSession().getAttribute(UserConstant.USER_LOGIN_STATE) == null) {
+                throw new BusinessException(ErrorCode.OPERATION_ERROR, "未登录");
+            }
+
+            HttpSession session = request.getSession();
+            // 移除登录态
+            session.removeAttribute(UserConstant.USER_LOGIN_STATE);
+            String token = String.valueOf(session.getAttribute("token"));
+            stringRedisTemplate.delete(token);
+            session.removeAttribute("token");
+        } catch (BusinessException e) {
+            e.printStackTrace();
+        } finally {
+            // 从线程中移除用户
+            UserHolder.removeUser();
         }
-        // 移除登录态
-        request.getSession().removeAttribute(UserConstant.USER_LOGIN_STATE);
+
         return true;
     }
 

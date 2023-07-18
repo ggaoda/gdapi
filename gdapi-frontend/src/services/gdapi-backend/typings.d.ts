@@ -247,6 +247,7 @@ declare namespace API {
     id?: number;
     role?: number;
     updateTime?: string;
+    userToken?: string;
     username?: string;
   };
 
@@ -398,6 +399,7 @@ declare namespace API {
     createTime?: string;
     id?: number;
     role?: number;
+    userToken?: string;
     username?: string;
   };
 }

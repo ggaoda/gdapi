@@ -28,5 +28,17 @@ public interface UserConstant {
      */
     int BAN_ROLE = -1;
 
+
+    /**
+     * 登入令牌过期时间
+     */
+
+    Long LOGIN_USER_TTL = 10L;
+
+    /**
+     * 用户登入key
+     */
+    String LOGIN_USER_KEY = "api:login:user:";
+
     // endregion
 }

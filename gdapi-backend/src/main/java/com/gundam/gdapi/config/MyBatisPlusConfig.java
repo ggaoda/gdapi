@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Configuration;
  * @author Gundam
  */
 @Configuration
-@MapperScan("com.gundam.springbootinit.mapper")
+@MapperScan("com.gundam.gdapi.mapper")
 public class MyBatisPlusConfig {
 
     /**

@@ -1,9 +1,7 @@
-import {currentUser, outLogin} from '@/services/ant-design-pro/api';
-import { LogoutOutlined, SettingOutlined, UserOutlined } from '@ant-design/icons';
+import { LogoutOutlined } from '@ant-design/icons';
 import { useEmotionCss } from '@ant-design/use-emotion-css';
 import { history, useModel } from '@umijs/max';
-import { Spin } from 'antd';
-import { stringify } from 'querystring';
+import {message, Spin} from 'antd';
 import type { MenuInfo } from 'rc-menu/lib/interface';
 import React, { useCallback } from 'react';
 import { flushSync } from 'react-dom';
@@ -25,9 +23,11 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu, childre
   /**
    * 退出登录，并且将当前的 url 保存
    */
+  /**
+   * 退出登录，并且将当前的 url 保存
+   */
   const loginOut = async () => {
     await userLogoutUsingPOST();
-    const { search, pathname } = window.location;
     const urlParams = new URL(window.location.href).searchParams;
     /** 此方法会跳转到 redirect 参数所在的位置 */
     const redirect = urlParams.get('redirect');
@@ -35,12 +35,13 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu, childre
     if (window.location.pathname !== '/user/login' && !redirect) {
       history.replace({
         pathname: '/user/login',
-        search: stringify({
-          redirect: pathname + search,
-        }),
+        // search: stringify({
+        //   redirect: pathname + search,
+        // }),
       });
     }
   };
+
   const actionClassName = useEmotionCss(({ token }) => {
     return {
       display: 'flex',
@@ -59,13 +60,19 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu, childre
   const { initialState, setInitialState } = useModel('@@initialState');
 
   const onMenuClick = useCallback(
-    (event: MenuInfo) => {
+     (event: MenuInfo) => {
       const { key } = event;
       if (key === 'logout') {
         flushSync(() => {
           setInitialState((s) => ({ ...s, loginUser: undefined }));
         });
-        loginOut();
+
+
+        userLogoutUsingPOST();
+
+        history.push("/user/login");
+        console.log("退出成功!")
+        message.success("退出成功!");
         // userLoginUsingPOST({
         //   ...values,
         // });
@@ -126,7 +133,7 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu, childre
 
 
   return (
-    <HeaderDropdown
+    <HeaderDropdown placement={'topRight'}
       menu={{
         selectedKeys: [],
         onClick: onMenuClick,

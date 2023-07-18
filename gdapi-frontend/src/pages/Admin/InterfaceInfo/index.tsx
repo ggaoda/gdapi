@@ -23,10 +23,6 @@ import {
 import UpdateModal from "@/pages/Admin/InterfaceInfo/components/UpdateModal";
 
 
-
-
-
-
 const TableList: React.FC = () => {
   /**
    * @en-US Pop-up window of new window
