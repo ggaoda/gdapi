@@ -3,10 +3,13 @@ package com.gundam.gdapiclientsdk.utils;
 import cn.hutool.crypto.digest.DigestAlgorithm;
 import cn.hutool.crypto.digest.Digester;
 
+/**
+ * 签名工具类
+ */
 public class SignUtils {
 
     /**
-     * 生成签名
+     * 生成签名算法
      * @param body 用户参数
      * @param secretKey 密钥
      * @return 不可解密的值

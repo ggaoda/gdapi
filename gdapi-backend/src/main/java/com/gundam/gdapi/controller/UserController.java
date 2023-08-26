@@ -50,17 +50,19 @@ public class UserController {
      * @return
      */
     @PostMapping("/register")
-    public BaseResponse<Long> userRegister(@RequestBody UserRegisterRequest userRegisterRequest) {
+    public BaseResponse<Long> userRegister(@RequestBody UserRegisterRequest userRegisterRequest, HttpServletRequest request) {
         if (userRegisterRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        String userAccount = userRegisterRequest.getUserAccount();
-        String userPassword = userRegisterRequest.getUserPassword();
-        String checkPassword = userRegisterRequest.getCheckPassword();
-        String vipCode = userRegisterRequest.getVipCode();
-        if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword, vipCode)) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "请求数据为空!");        }
-        long result = userService.userRegister(userAccount, userPassword, checkPassword, vipCode);
+//        String userAccount = userRegisterRequest.getUserAccount();
+//        String userPassword = userRegisterRequest.getUserPassword();
+//        String checkPassword = userRegisterRequest.getCheckPassword();
+//        String vipCode = userRegisterRequest.getVipCode();
+//        String mobile = userRegisterRequest.getMobile();
+//        String captcha = userRegisterRequest.getCaptcha();
+//        if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword, vipCode)) {
+//            throw new BusinessException(ErrorCode.PARAMS_ERROR, "请求数据为空!");        }
+        long result = userService.userRegister(userRegisterRequest, request);
         return ResultUtils.success(result);
     }
 

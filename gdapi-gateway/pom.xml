@@ -66,6 +66,31 @@
             <groupId>com.gundam</groupId>
             <artifactId>gdapi-common</artifactId>
             <version>0.0.1</version>
+            <exclusions>
+                    <exclusion>
+                        <groupId>org.springframework.boot</groupId>
+                        <artifactId>spring-boot-starter-web</artifactId>
+                    </exclusion>
+            </exclusions>
+        </dependency>
+
+
+        <!--基于Redis实现限流-响应式Redis模型-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis-reactive</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-amqp</artifactId>
+        </dependency>
+
+        <!--        谷歌的Ratelimter限流组件-->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>23.0</version>
         </dependency>
 
     </dependencies>

@@ -33,4 +33,19 @@ public class UserRegisterRequest implements Serializable {
      * vip编号
      */
     private String vipCode;
+
+    /**
+     * 手机号
+     */
+    private String mobile;
+
+    /**
+     * 手机验证码
+     */
+    private String code;
+
+    /**
+     * 图形验证码
+     */
+    private String captcha;
 }

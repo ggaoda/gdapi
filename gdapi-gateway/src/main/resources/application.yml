@@ -13,13 +13,24 @@ spring:
             - Path=/api/**
       default-filters:
         - AddResponseHeader=source, gaoda
+  redis:
+    database: 1
+    host: 192.168.174.100
+    port: 6379
+    timeout: 5000
+    lettuce:
+      pool:
+        max-active: 10
+        max-idle: 10
+        min-idle: 1
+        time-between-eviction-runs: 10s
+    password: 123456
 logging:
   level:
     org:
       springframework:
         cloud:
           gateway: trace
-
 dubbo:
   application:
     name: gdapi-backend

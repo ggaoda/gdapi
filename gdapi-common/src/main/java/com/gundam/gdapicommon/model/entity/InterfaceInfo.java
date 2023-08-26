@@ -75,6 +75,19 @@ public class InterfaceInfo implements Serializable {
      */
     private Date updateTime;
 
+
+    /**
+     * 接口对应的sdk
+     */
+    private String sdk;
+
+    /**
+     * 请求参数示例
+     */
+    private String parameterExample;
+
+
+
     /**
      * 是否删除(0-未删, 1-已删)
      */

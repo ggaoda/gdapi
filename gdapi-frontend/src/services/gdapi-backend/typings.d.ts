@@ -131,6 +131,8 @@ declare namespace API {
     updateTime?: string;
     url?: string;
     userId?: number;
+
+
   };
 
   type InterfaceInfoAddRequest = {

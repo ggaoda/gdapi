@@ -79,6 +79,12 @@
             <optional>true</optional>
         </dependency>
 
+        <!-- rabbitmq依赖-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-amqp</artifactId>
+        </dependency>
+
 
 <!--        <dependency>-->
 <!--            <groupId>org.redisson</groupId>-->

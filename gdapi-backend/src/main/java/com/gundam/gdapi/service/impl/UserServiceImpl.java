@@ -8,9 +8,12 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.gundam.gdapi.common.ErrorCode;
+
+import com.gundam.gdapi.common.SmsLimiter;
 import com.gundam.gdapi.constant.CommonConstant;
 import com.gundam.gdapi.constant.UserConstant;
 import com.gundam.gdapi.model.dto.user.UserQueryRequest;
+import com.gundam.gdapi.model.dto.user.UserRegisterRequest;
 import com.gundam.gdapi.model.enums.UserRoleEnum;
 import com.gundam.gdapi.model.vo.LoginUserVO;
 import com.gundam.gdapi.model.vo.UserVO;
@@ -30,10 +33,13 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 import com.gundam.gdapi.utils.UserHolder;
+import com.gundam.gdapicommon.AuthPhoneNumber;
 import com.gundam.gdapicommon.model.entity.User;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
@@ -53,10 +59,26 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Resource
     private StringRedisTemplate stringRedisTemplate;
 
+    @Resource
+    private SmsLimiter smsLimiter;
+
+    private static final String CAPTCHA_PREFIX = "api:captchaId:";
+
     @Override
-    public long userRegister(String userAccount, String userPassword, String checkPassword, String vipCode) {
+    public long userRegister(UserRegisterRequest userRegisterRequest, HttpServletRequest request) {
+
+        String userAccount = userRegisterRequest.getUserAccount();
+        String userPassword = userRegisterRequest.getUserPassword();
+        String checkPassword = userRegisterRequest.getCheckPassword();
+        String vipCode = userRegisterRequest.getVipCode();
+        String mobile = userRegisterRequest.getMobile();
+        String captcha = userRegisterRequest.getCaptcha();
+        String code = userRegisterRequest.getCode();
+
+        AuthPhoneNumber authPhoneNumber = new AuthPhoneNumber();
+
         // 1. 校验
-        if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword)) {
+        if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword, vipCode, mobile, captcha, code)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空!");
         }
         if (userAccount.length() < 4) {
@@ -79,6 +101,28 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 密码和校验密码相同
         if (!userPassword.equals(checkPassword)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "两次输入的密码不一致!");
+        }
+
+        //手机号合法
+        if (!authPhoneNumber.isPhoneNum(mobile)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "手机号非法!");
+        }
+
+        //图形验证码是否正确
+        String signature = request.getHeader("signature");
+        if (signature == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "图形验证码为空!");
+        }
+
+        String picCaptcha = stringRedisTemplate.opsForValue().get(CAPTCHA_PREFIX + signature);
+        if (picCaptcha == null || authPhoneNumber.isCaptcha(captcha) || !captcha.equals(picCaptcha)) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "图形验证码错误或已经过期，请重新刷新验证码!");
+        }
+
+        // 手机号和验证码是否匹配
+        boolean verify = smsLimiter.verifyCode(mobile, code);
+        if (!verify) {
+            throw new BusinessException(ErrorCode.SMS_CODE_ERROR);
         }
 
         synchronized (userAccount.intern()) {

@@ -15,6 +15,7 @@ public enum ErrorCode {
 
     FORBIDDEN_ERROR(40300, "禁止访问"),
     SYSTEM_ERROR(50000, "系统内部异常"),
+    SMS_CODE_ERROR(50002,"验证码或手机号错误"),
     OPERATION_ERROR(50001, "操作失败");
 
     /**

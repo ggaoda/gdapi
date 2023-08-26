@@ -3,6 +3,7 @@ package com.gundam.gdapi.service;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.gundam.gdapi.model.dto.user.UserQueryRequest;
+import com.gundam.gdapi.model.dto.user.UserRegisterRequest;
 import com.gundam.gdapi.model.vo.LoginUserVO;
 import com.gundam.gdapi.model.vo.UserVO;
 import com.gundam.gdapicommon.model.entity.User;
@@ -24,8 +25,8 @@ public interface UserService extends IService<User> {
      * @param checkPassword 校验密码
      * @return 新用户 id
      */
-    long userRegister(String userAccount, String userPassword, String checkPassword, String vipCode);
-
+//    long userRegister(String userAccount, String userPassword, String checkPassword, String vipCode);
+      long userRegister(UserRegisterRequest userRegisterRequest, HttpServletRequest request);
     /**
      * 用户登录
      *
