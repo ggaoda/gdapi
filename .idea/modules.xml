@@ -3,11 +3,6 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/api.iml" filepath="$PROJECT_DIR$/.idea/api.iml" />
-      <module fileurl="file://$PROJECT_DIR$/gdapi-backend/gdapi-backend.iml" filepath="$PROJECT_DIR$/gdapi-backend/gdapi-backend.iml" />
-      <module fileurl="file://$PROJECT_DIR$/gdapi-client-sdk/gdapi-client-sdk.iml" filepath="$PROJECT_DIR$/gdapi-client-sdk/gdapi-client-sdk.iml" />
-      <module fileurl="file://$PROJECT_DIR$/gdapi-common/gdapi-common.iml" filepath="$PROJECT_DIR$/gdapi-common/gdapi-common.iml" />
-      <module fileurl="file://$PROJECT_DIR$/gdapi-gateway/gdapi-gateway.iml" filepath="$PROJECT_DIR$/gdapi-gateway/gdapi-gateway.iml" />
-      <module fileurl="file://$PROJECT_DIR$/gdapi-interface/gdapi-interface.iml" filepath="$PROJECT_DIR$/gdapi-interface/gdapi-interface.iml" />
     </modules>
   </component>
 </project>

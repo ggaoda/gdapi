@@ -1,5 +1,8 @@
 package com.gundam.gdapi.service.impl;
 
+import cn.hutool.captcha.CaptchaUtil;
+import cn.hutool.captcha.LineCaptcha;
+import cn.hutool.captcha.generator.RandomGenerator;
 import cn.hutool.core.lang.UUID;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
@@ -22,6 +25,7 @@ import com.gundam.gdapi.exception.BusinessException;
 import com.gundam.gdapi.mapper.UserMapper;
 import com.gundam.gdapi.service.UserService;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -30,6 +34,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import com.gundam.gdapi.utils.UserHolder;
@@ -186,6 +191,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 3. 记录用户的登录态
         HttpSession session = request.getSession();
         session.setAttribute(UserConstant.USER_LOGIN_STATE, user);
+
 
         LoginUserVO loginUserVO = new LoginUserVO();
         BeanUtils.copyProperties(user, loginUserVO);
@@ -381,4 +387,36 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 sortField);
         return queryWrapper;
     }
+
+
+    @Override
+    public void getCaptcha(HttpServletRequest request, HttpServletResponse response) {
+        //前端必须传一个 signature 来作为唯一标识
+        String signature = request.getHeader("signature");
+        if (StringUtils.isEmpty(signature)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+
+        try {
+            // 自定义纯数字的验证码（随机4位数字，可重复）
+            RandomGenerator randomGenerator = new RandomGenerator("0123456789", 4);
+            LineCaptcha lineCaptcha = CaptchaUtil.createLineCaptcha(100, 30);
+            lineCaptcha.setGenerator(randomGenerator);
+            //设置响应头
+            response.setContentType("image/jpeg");
+            response.setHeader("Pragma", "No-cache");
+            // 输出到页面
+            lineCaptcha.write(response.getOutputStream());
+            // 打印日志
+            log.info("captchaId：{} ----生成的验证码:{}", signature, lineCaptcha.getCode());
+            // 将验证码设置到Redis中,2分钟过期
+            stringRedisTemplate.opsForValue().set(CAPTCHA_PREFIX + signature, lineCaptcha.getCode(), 2, TimeUnit.MINUTES);
+            // 关闭流
+            response.getOutputStream().close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
 }

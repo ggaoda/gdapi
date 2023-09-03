@@ -8,5 +8,9 @@
     <file url="file://$PROJECT_DIR$/gdapi-common/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/gdapi-gateway/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/gdapi-interface/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/gdapi-order/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/gdapi-order/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/gdapi-third-party/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/gdapi-third-party/src/main/resources" charset="UTF-8" />
   </component>
 </project>

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.gundam.gdapi.common.ErrorCode;
 import com.gundam.gdapi.exception.BusinessException;
 import com.gundam.gdapi.mapper.UserMapper;
+import com.gundam.gdapi.service.UserService;
 import com.gundam.gdapicommon.model.entity.User;
 import com.gundam.gdapicommon.service.InnerUserService;
 import org.apache.commons.lang3.StringUtils;
@@ -17,6 +18,9 @@ public class InnerUserServiceImpl implements InnerUserService {
     @Resource
     private UserMapper userMapper;
 
+    @Resource
+    private UserService userService;
+
     @Override
     public User getInvokeUser(String accessKey) {
         if (StringUtils.isAnyBlank(accessKey)){
@@ -25,5 +29,10 @@ public class InnerUserServiceImpl implements InnerUserService {
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("accessKey", accessKey);
         return userMapper.selectOne(queryWrapper);
+    }
+
+    @Override
+    public User getUserById(Long userId) {
+        return userService.getById(userId);
     }
 }

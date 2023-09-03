@@ -29,6 +29,12 @@ declare namespace API {
     message?: string;
   };
 
+  type BaseResponseListUserInterfaceInfoVO_ = {
+    code?: number;
+    data?: UserInterfaceInfoVO[];
+    message?: string;
+  };
+
   type BaseResponseLoginUserVO_ = {
     code?: number;
     data?: LoginUserVO;
@@ -98,6 +104,11 @@ declare namespace API {
     id?: number;
   };
 
+  type getInterfaceInfoByUserIdUsingGETParams = {
+    /** userId */
+    userId: number;
+  };
+
   type getUserByIdUsingGETParams = {
     /** id */
     id?: number;
@@ -124,15 +135,15 @@ declare namespace API {
     isDeleted?: number;
     method?: string;
     name?: string;
+    parameterExample?: string;
     requestHeader?: string;
     requestParams?: string;
     responseHeader?: string;
+    sdk?: string;
     status?: number;
     updateTime?: string;
     url?: string;
     userId?: number;
-
-
   };
 
   type InterfaceInfoAddRequest = {
@@ -173,9 +184,11 @@ declare namespace API {
     isDeleted?: number;
     method?: string;
     name?: string;
+    parameterExample?: string;
     requestHeader?: string;
     requestParams?: string;
     responseHeader?: string;
+    sdk?: string;
     status?: number;
     totalNum?: number;
     updateTime?: string;
@@ -362,6 +375,19 @@ declare namespace API {
     totalNum?: number;
   };
 
+  type UserInterfaceInfoVO = {
+    description?: string;
+    id?: number;
+    interfaceInfoId?: number;
+    interfaceStatus?: number;
+    leftNum?: number;
+    method?: string;
+    name?: string;
+    status?: number;
+    totalNum?: number;
+    url?: string;
+  };
+
   type UserLoginRequest = {
     userAccount?: string;
     userPassword?: string;
@@ -378,7 +404,10 @@ declare namespace API {
   };
 
   type UserRegisterRequest = {
+    captcha?: string;
     checkPassword?: string;
+    code?: string;
+    mobile?: string;
     userAccount?: string;
     userPassword?: string;
     vipCode?: string;

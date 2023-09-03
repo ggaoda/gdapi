@@ -129,7 +129,7 @@ export default defineConfig({
       requestLibPath: "import { request } from '@umijs/max'",
       schemaPath: 'http://localhost:8080/api/v2/api-docs',
       projectName: 'gdapi-backend',
-    },
+    }
   ],
   mfsu: {
     strategy: 'normal',

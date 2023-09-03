@@ -10,6 +10,7 @@ import com.gundam.gdapi.exception.BusinessException;
 import com.gundam.gdapi.model.dto.userInterfaceInfo.UserInterfaceInfoAddRequest;
 import com.gundam.gdapi.model.dto.userInterfaceInfo.UserInterfaceInfoQueryRequest;
 import com.gundam.gdapi.model.dto.userInterfaceInfo.UserInterfaceInfoUpdateRequest;
+import com.gundam.gdapi.model.vo.UserInterfaceInfoVO;
 import com.gundam.gdapi.service.UserInterfaceInfoService;
 import com.gundam.gdapi.service.UserService;
 import com.gundam.gdapicommon.model.entity.User;
@@ -194,6 +195,15 @@ public class UserInterfaceInfoController {
                 sortOrder.equals(CommonConstant.SORT_ORDER_ASC), sortField);
         Page<UserInterfaceInfo> userInterfaceInfoPage = userInterfaceInfoService.page(new Page<>(current, size), queryWrapper);
         return ResultUtils.success(userInterfaceInfoPage);
+    }
+
+
+
+
+    @GetMapping("/list/userId")
+    public BaseResponse<List<UserInterfaceInfoVO>> getInterfaceInfoByUserId(@RequestParam Long userId, HttpServletRequest request) {
+        List<UserInterfaceInfoVO > userInterfaceInfoVOList = userInterfaceInfoService.getInterfaceInfoByUserId(userId, request);
+        return ResultUtils.success(userInterfaceInfoVOList);
     }
 
 

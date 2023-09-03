@@ -1,10 +1,19 @@
-spring.application.name: gdapi-interface
+
 server:
-  port: 8081
+  port: 8082
   servlet:
-    context-path: /api
+    context-path: /api/interface/
 gdapi:
   client:
     access-key: gaoda
     secret-key: abcdefgh
+spring:
+  application:
+    name: gdapi-interface
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+        ip: 127.0.0.1
+#        service: gdapi-interface
 

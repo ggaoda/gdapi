@@ -152,6 +152,45 @@ create table interface_info
     comment '接口信息表';
 
 
+-- ----------------------------
+-- Table structure for interface_charging
+-- ----------------------------
+DROP TABLE IF EXISTS `interface_charging`;
+CREATE TABLE `interface_charging`  (
+                                       `id` bigint(0) NOT NULL AUTO_INCREMENT COMMENT '主键',
+                                       `interfaceId` bigint(0) NOT NULL COMMENT '接口id',
+                                       `charging` float(255, 2) NOT NULL COMMENT '计费规则（元/条）',
+                                       `availablePieces` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL COMMENT '接口剩余可调用次数',
+                                       `userId` bigint(0) NOT NULL COMMENT '创建人',
+                                       `createTime` datetime(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0) COMMENT '创建时间',
+                                       `updateTime` datetime(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0) ON UPDATE CURRENT_TIMESTAMP(0) COMMENT '更新时间',
+                                       `isDelete` tinyint(0) NOT NULL DEFAULT 1 COMMENT '是否删除(0-删除 1-正常)',
+                                       PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 3 CHARACTER SET = utf8 COLLATE = utf8_general_ci ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Records of interface_charging
+-- ----------------------------
+INSERT INTO `interface_charging` VALUES (1, 3, 0.52, '977', 1, '2023-07-24 14:33:49', '2023-08-02 19:31:39', 1);
 
 
 
+
+
+
+
+
+
+
+DROP TABLE IF EXISTS `alipay_info`;
+CREATE TABLE `alipay_info`  (
+                                `orderNumber` varchar(512) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL COMMENT '订单id',
+                                `subject` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL COMMENT '交易名称',
+                                `totalAmount` float(10, 2) NOT NULL COMMENT '交易金额',
+                                `buyerPayAmount` float(10, 2) NOT NULL COMMENT '买家付款金额',
+                                `buyerId` text CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL COMMENT '买家在支付宝的唯一id',
+                                `tradeNo` text CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL COMMENT '支付宝交易凭证号',
+                                `tradeStatus` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL COMMENT '交易状态',
+                                `gmtPayment` datetime(0) NOT NULL COMMENT '买家付款时间',
+                                PRIMARY KEY (`orderNumber`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8 COLLATE = utf8_general_ci ROW_FORMAT = DYNAMIC;

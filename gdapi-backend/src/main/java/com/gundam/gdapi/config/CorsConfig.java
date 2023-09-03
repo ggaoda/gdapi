@@ -45,7 +45,10 @@ public class CorsConfig implements WebMvcConfigurer {
                 "/user/register",
                 "/user/login",
                 "/user/get/login",
-                "/interfaceInfo/list/page"
+                "/interfaceInfo/list/page",
+                "/v2/api-docs",
+                "/user/interface/**",
+                "/user/order/**"
 
         ).order(2);
 

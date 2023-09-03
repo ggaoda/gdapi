@@ -46,6 +46,11 @@ spring:
     multipart:
       # 大小限制
       max-file-size: 10MB
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+        ip: 127.0.0.1
 server:
   address: 127.0.0.1
   port: 8080
@@ -55,6 +60,7 @@ server:
     session:
       cookie:
         max-age: 2592000
+        
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: false
@@ -81,3 +87,11 @@ dubbo:
   registry:
     id: zk-registry
     address: nacos://localhost:8848
+#dubbo:
+#  application:
+#    name: dubbo
+#  protocol:
+#    name: dubbo
+#    port: -1
+#  registry:
+#    address: nacos://localhost:8848

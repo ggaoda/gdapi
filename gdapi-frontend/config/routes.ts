@@ -37,4 +37,10 @@
   },
 
   { path: '*', layout: false, component: './404' },
+  {
+    path: '/order',
+    name: '订单',
+    icon: 'containerOutlined',
+    component: './Order',
+  },
 ];

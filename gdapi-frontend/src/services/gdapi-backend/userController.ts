@@ -67,6 +67,14 @@ export async function getUserVOByIdUsingGET(
   });
 }
 
+/** getCaptcha GET /api/user/getCaptcha */
+export async function getCaptchaUsingGET(options?: { [key: string]: any }) {
+  return request<any>('/api/user/getCaptcha', {
+    method: 'GET',
+    ...(options || {}),
+  });
+}
+
 /** listUserByPage POST /api/user/list/page */
 export async function listUserByPageUsingPOST(
   body: API.UserQueryRequest,

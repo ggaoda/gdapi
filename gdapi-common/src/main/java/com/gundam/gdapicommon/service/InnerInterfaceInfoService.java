@@ -15,4 +15,29 @@ public interface InnerInterfaceInfoService {
      * @return 接口信息
      */
     InterfaceInfo getInterfaceInfo(String path, String method);
+
+
+    /**
+     * 根据接口id获取接口详情
+     */
+    InterfaceInfo getInterfaceById(long interfaceId);
+
+    /**
+     *根据接口id获取接口库存
+     * @param interfaceId
+     * @return
+     */
+    int getInterfaceStockById(long interfaceId);
+
+
+    /**
+     * 扣减库存
+     * @param interfaceId
+     * @param num
+     * @return
+     */
+    boolean updateInterfaceStock(long interfaceId,Integer num);
+
+
+
 }

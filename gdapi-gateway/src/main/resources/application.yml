@@ -7,12 +7,26 @@ spring:
   cloud:
     gateway:
       routes:
+        - id: api_order_route
+          uri: lb://gdapi-order
+          predicates:
+            - Path=/api/order/**
+#          filters:
+#            - RemoveResponseHeader=Set-Cookie
+        - id: api_third_route
+          uri: lb://gdapi-third-party
+          predicates:
+              - Path=/api/third/**
         - id: path_route
-          uri: http://localhost:8081
+          uri: lb://gdapi-backend
           predicates:
             - Path=/api/**
       default-filters:
         - AddResponseHeader=source, gaoda
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+        ip: 127.0.0.1
   redis:
     database: 1
     host: 192.168.174.100
@@ -34,9 +48,15 @@ logging:
 dubbo:
   application:
     name: gdapi-backend
+    qosEnableL: true
+    qosPort: 33333
+    qosAcceptForeignIp: false
   protocol:
     name: dubbo
     port: -1
   registry:
     id: zk-registry
     address: nacos://localhost:8848
+
+
+

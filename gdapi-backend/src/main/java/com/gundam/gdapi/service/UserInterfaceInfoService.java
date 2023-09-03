@@ -2,7 +2,11 @@ package com.gundam.gdapi.service;
 
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.gundam.gdapi.model.vo.UserInterfaceInfoVO;
 import com.gundam.gdapicommon.model.entity.UserInterfaceInfo;
+
+import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 /**
 * @author Gundam
@@ -21,6 +25,9 @@ public interface UserInterfaceInfoService extends IService<UserInterfaceInfo> {
      * @return 更新数量结果
      */
     Boolean invokeCount(long interfaceInfoId, long userId);
+
+
+    List<UserInterfaceInfoVO> getInterfaceInfoByUserId(Long userId, HttpServletRequest request);
 
 
 }

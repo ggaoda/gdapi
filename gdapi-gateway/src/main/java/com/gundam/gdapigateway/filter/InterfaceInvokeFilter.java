@@ -3,6 +3,7 @@ package com.gundam.gdapigateway.filter;
 import com.gundam.gdapiclientsdk.utils.SignUtils;
 import com.gundam.gdapicommon.model.entity.InterfaceInfo;
 import com.gundam.gdapicommon.model.entity.User;
+import com.gundam.gdapicommon.service.ApiBackendService;
 import com.gundam.gdapicommon.service.InnerInterfaceInfoService;
 import com.gundam.gdapicommon.service.InnerUserInterfaceInfoService;
 import com.gundam.gdapicommon.service.InnerUserService;
@@ -41,7 +42,7 @@ import static com.gundam.gdapicommon.constant.RabbitmqConstant.ROUTING_KEY_INTER
  */
 @Slf4j
 @Component
-public class InterfaceInvokeFilter implements GlobalFilter, Ordered {
+public class InterfaceInvokeFilter implements GatewayFilter, Ordered {
 
     @DubboReference
     private InnerUserService innerUserService;
@@ -51,6 +52,14 @@ public class InterfaceInvokeFilter implements GlobalFilter, Ordered {
 
     @DubboReference
     private InnerUserInterfaceInfoService innerUserInterfaceInfoService;
+
+
+//    @DubboReference
+//    private ApiBackendService apiBackendService;
+
+
+
+
 
 //    private static final List<String> IP_WHITE_LIST = Arrays.asList("127.0.0.1");
 

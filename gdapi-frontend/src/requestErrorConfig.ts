@@ -25,8 +25,9 @@ interface ResponseStructure {
  */
 export const errorConfig: RequestConfig = {
 
-  baseURL: 'http://localhost:8080',
+  baseURL: 'http://localhost:8090',
   withCredentials: true,
+
 
 
   // 请求拦截器
@@ -41,6 +42,8 @@ export const errorConfig: RequestConfig = {
         'x-auth-token' : token
       };
       return { ...config, url , headers: headers};
+      // const url = config?.url;
+      // return { ...config, url };
     },
   ],
 

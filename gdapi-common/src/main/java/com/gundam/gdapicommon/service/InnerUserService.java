@@ -17,4 +17,14 @@ public interface InnerUserService {
      */
     User getInvokeUser(String accessKey);
 
+
+        /**
+         * 根据用户id获取用户信息
+         * @param userId
+         * @return
+         */
+        User getUserById(Long userId);
+
+
+
 }

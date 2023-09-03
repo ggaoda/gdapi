@@ -16,7 +16,7 @@ public class RandomApiClient extends CommonApiClient{
      * @return
      */
     public String getRandomWork(){
-        return HttpRequest.get(GATEWAY_HOST+"/api/random/word")
+        return HttpRequest.get(GATEWAY_HOST+"/api/interface/random/word")
                 .addHeaders(getHeadMap("",accessKey,secretKey))
                 .execute().body();
     }
