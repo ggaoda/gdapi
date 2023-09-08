@@ -1,5 +1,8 @@
 server:
   port: 8090
+  servlet:
+    session:
+      timeout: 2592000
 
 spring:
   application:
@@ -47,7 +50,7 @@ logging:
           gateway: trace
 dubbo:
   application:
-    name: gdapi-backend
+    name: dubbo
     qosEnableL: true
     qosPort: 33333
     qosAcceptForeignIp: false

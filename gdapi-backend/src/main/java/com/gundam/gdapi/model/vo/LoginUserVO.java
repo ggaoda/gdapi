@@ -20,6 +20,15 @@ public class LoginUserVO implements Serializable {
      * 用户昵称
      */
     private String username;
+    /**
+     * 用户账号
+     */
+    private String userAccount;
+
+    /**
+     * 性别
+     */
+    private Integer gender;
 
     /**
      * 用户头像

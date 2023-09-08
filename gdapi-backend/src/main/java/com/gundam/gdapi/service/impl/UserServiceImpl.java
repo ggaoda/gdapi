@@ -8,18 +8,26 @@ import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.digest.DigestUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.gson.Gson;
 import com.gundam.gdapi.common.ErrorCode;
 
+import com.gundam.gdapi.common.ResultUtils;
 import com.gundam.gdapi.common.SmsLimiter;
 import com.gundam.gdapi.constant.CommonConstant;
 import com.gundam.gdapi.constant.UserConstant;
+import com.gundam.gdapi.exception.ThrowUtils;
 import com.gundam.gdapi.model.dto.user.UserQueryRequest;
 import com.gundam.gdapi.model.dto.user.UserRegisterRequest;
+import com.gundam.gdapi.model.dto.user.UserUpdateRequest;
 import com.gundam.gdapi.model.enums.UserRoleEnum;
 import com.gundam.gdapi.model.vo.LoginUserVO;
+import com.gundam.gdapi.model.vo.UserDevKeyVO;
 import com.gundam.gdapi.model.vo.UserVO;
+import com.gundam.gdapi.utils.LeakyBucket;
+import com.gundam.gdapi.utils.QiniuUtils;
 import com.gundam.gdapi.utils.SqlUtils;
 import com.gundam.gdapi.exception.BusinessException;
 import com.gundam.gdapi.mapper.UserMapper;
@@ -38,19 +46,25 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import com.gundam.gdapi.utils.UserHolder;
-import com.gundam.gdapicommon.AuthPhoneNumber;
+import com.gundam.gdapicommon.model.entity.SmsMessage;
 import com.gundam.gdapicommon.model.entity.User;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import static com.gundam.gdapi.constant.CommonConstant.SALT;
 import static com.gundam.gdapi.constant.UserConstant.*;
+import static com.gundam.gdapi.utils.LeakyBucket.loginLeakyBucket;
+import static com.gundam.gdapi.utils.LeakyBucket.registerLeakyBucket;
+import static com.gundam.gdapicommon.constant.RabbitmqConstant.EXCHANGE_SMS_INFORM;
+import static com.gundam.gdapicommon.constant.RabbitmqConstant.ROUTINGKEY_SMS;
+import static com.gundam.gdapicommon.constant.RedisConstant.LOGINCODEPRE;
 
 /**
  * 用户服务实现
@@ -65,9 +79,23 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private StringRedisTemplate stringRedisTemplate;
 
     @Resource
+    private RabbitTemplate rabbitTemplate;
+
+    @Resource
     private SmsLimiter smsLimiter;
 
+    @Resource
+    private Gson gson;
+
     private static final String CAPTCHA_PREFIX = "api:captchaId:";
+
+    //登录和注册的标识，方便切换不同的令牌桶来限制验证码发送
+    private static final String LOGIN_SIGN = "login";
+
+    private static final String REGISTER_SIGN="register";
+
+    public static final String USER_LOGIN_EMAIL_CODE ="user:login:email:code:";
+    public static final String USER_REGISTER_EMAIL_CODE ="user:register:email:code:";
 
     @Override
     public long userRegister(UserRegisterRequest userRegisterRequest, HttpServletRequest request) {
@@ -76,14 +104,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         String userPassword = userRegisterRequest.getUserPassword();
         String checkPassword = userRegisterRequest.getCheckPassword();
         String vipCode = userRegisterRequest.getVipCode();
-        String mobile = userRegisterRequest.getMobile();
         String captcha = userRegisterRequest.getCaptcha();
-        String code = userRegisterRequest.getCode();
 
-        AuthPhoneNumber authPhoneNumber = new AuthPhoneNumber();
 
         // 1. 校验
-        if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword, vipCode, mobile, captcha, code)) {
+        if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword, vipCode)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空!");
         }
         if (userAccount.length() < 4) {
@@ -108,27 +133,23 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "两次输入的密码不一致!");
         }
 
-        //手机号合法
-        if (!authPhoneNumber.isPhoneNum(mobile)) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "手机号非法!");
-        }
+//        //手机号合法
+//        if (!authPhoneNumber.isPhoneNum(mobile)) {
+//            throw new BusinessException(ErrorCode.PARAMS_ERROR, "手机号非法!");
+//        }
 
-        //图形验证码是否正确
-        String signature = request.getHeader("signature");
-        if (signature == null) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "图形验证码为空!");
-        }
 
-        String picCaptcha = stringRedisTemplate.opsForValue().get(CAPTCHA_PREFIX + signature);
-        if (picCaptcha == null || authPhoneNumber.isCaptcha(captcha) || !captcha.equals(picCaptcha)) {
+
+        String picCaptcha = stringRedisTemplate.opsForValue().get(CAPTCHA_PREFIX + request.getHeader("signature"));
+        if (picCaptcha == null || !captcha.equals(picCaptcha)) {
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "图形验证码错误或已经过期，请重新刷新验证码!");
         }
 
-        // 手机号和验证码是否匹配
-        boolean verify = smsLimiter.verifyCode(mobile, code);
-        if (!verify) {
-            throw new BusinessException(ErrorCode.SMS_CODE_ERROR);
-        }
+//        // 手机号和验证码是否匹配
+//        boolean verify = smsLimiter.verifyCode(mobile, code);
+//        if (!verify) {
+//            throw new BusinessException(ErrorCode.SMS_CODE_ERROR);
+//        }
 
         synchronized (userAccount.intern()) {
             // 账户不能重复
@@ -389,6 +410,64 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
 
+
+    @Override
+    public void sendCode(String email, String captchaType) {
+
+
+        if (StringUtils.isBlank(captchaType)){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"验证码类型为空!!!");
+        }
+
+        //令牌桶算法实现短信接口的限流，因为手机号码重复发送短信，要进行流量控制
+        //解决同一个手机号的并发问题，锁的粒度非常小，不影响性能。只是为了防止用户第一次发送短信时的恶意调用
+        synchronized (email.intern()) {
+            Boolean exist = stringRedisTemplate.hasKey(USER_LOGIN_EMAIL_CODE +email);
+            if (exist!=null && exist) {
+                //1.令牌桶算法对手机短信接口进行限流 具体限流规则为同一个手机号，60s只能发送一次
+                long lastTime=0L;
+                LeakyBucket leakyBucket = null;
+                if (captchaType.equals(REGISTER_SIGN)){
+                    String strLastTime = stringRedisTemplate.opsForValue().get(USER_REGISTER_EMAIL_CODE + email);
+                    if (strLastTime!=null){
+                        lastTime = Long.parseLong(strLastTime);
+                    }
+                    leakyBucket = registerLeakyBucket;
+                }else{
+                    String strLastTime = stringRedisTemplate.opsForValue().get(USER_LOGIN_EMAIL_CODE + email);
+                    if (strLastTime!=null){
+                        lastTime = Long.parseLong(strLastTime);
+                    }
+                    leakyBucket = loginLeakyBucket;
+                }
+
+                if (!leakyBucket.control(lastTime)) {
+                    log.info("邮箱发送太频繁了");
+                    throw new BusinessException(ErrorCode.PARAMS_ERROR,"邮箱送太频繁了");
+                }
+            }
+
+            //2.符合限流规则则生成手机短信
+            String code = RandomUtil.randomNumbers(4);
+            SmsMessage smsMessage = new SmsMessage(email, code);
+
+
+            //消息队列异步发送短信，提高短信的吞吐量
+            rabbitTemplate.convertAndSend(EXCHANGE_SMS_INFORM,ROUTINGKEY_SMS,smsMessage);
+
+            log.info("邮箱对象："+smsMessage.toString());
+            //更新手机号发送短信的时间
+            if (captchaType.equals(REGISTER_SIGN)){
+                stringRedisTemplate.opsForValue().set(USER_REGISTER_EMAIL_CODE +email,""+System.currentTimeMillis()/1000);
+            }else {
+                stringRedisTemplate.opsForValue().set(USER_LOGIN_EMAIL_CODE +email,""+System.currentTimeMillis()/1000);
+            }
+
+        }
+
+    }
+
+
     @Override
     public void getCaptcha(HttpServletRequest request, HttpServletResponse response) {
         //前端必须传一个 signature 来作为唯一标识
@@ -417,6 +496,241 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             e.printStackTrace();
         }
     }
+
+
+    @Override
+    public UserDevKeyVO genkey(HttpServletRequest request) {
+        User loginUser = getLoginUser(request);
+        if(loginUser == null){
+            throw new BusinessException(ErrorCode.OPERATION_ERROR);
+        }
+        UserDevKeyVO userDevKeyVO = genKey(loginUser.getUserAccount());
+        UpdateWrapper<User> updateWrapper = new UpdateWrapper<>();
+        updateWrapper.eq("userAccount",loginUser.getUserAccount());
+        updateWrapper.eq("id",loginUser.getId());
+        updateWrapper.set("accessKey",userDevKeyVO.getAccessKey());
+        updateWrapper.set("secretKey",userDevKeyVO.getSecretKey());
+        this.update(updateWrapper);
+        loginUser.setAccessKey(userDevKeyVO.getAccessKey());
+        loginUser.setSecretKey(userDevKeyVO.getSecretKey());
+
+        //重置登录用户的ak,sk信息
+
+        LoginUserVO loginUserVO = new LoginUserVO();
+        BeanUtils.copyProperties(loginUser, loginUserVO);
+        // 生成token
+        String token = UUID.randomUUID().toString();
+        // 加盐生成tokenKey
+        String tokenKey = LOGIN_USER_KEY + SALT + token + loginUserVO.getId();
+        // 3. 记录用户的登录态
+        HttpSession session = request.getSession();
+        session.setAttribute(UserConstant.USER_LOGIN_STATE, loginUserVO);
+        session.setAttribute("token", tokenKey);
+        // 将用户保存在redis
+        String id = String.valueOf(loginUserVO.getId());
+        stringRedisTemplate.opsForValue().set(tokenKey, id);
+        stringRedisTemplate.expire(tokenKey, LOGIN_USER_TTL, TimeUnit.MINUTES); // 设置过期时间
+
+
+        return userDevKeyVO;
+    }
+
+    @Override
+    public LoginUserVO userLoginBySms(String emailNum, String emailCode, HttpServletRequest request, HttpServletResponse response) {
+
+        //1.校验邮箱验证码是否正确
+        if (!emailCodeValid(emailNum, emailCode)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"邮箱验证码错误!!!");
+        }
+
+        //2.校验邮箱是否存在
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("email",emailNum);
+        User user = this.getOne(queryWrapper);
+
+        if(user == null){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"用户不存在！");
+        }
+
+        // 3. 记录用户的登录态
+        HttpSession session = request.getSession();
+        session.setAttribute(UserConstant.USER_LOGIN_STATE, user);
+
+
+        LoginUserVO loginUserVO = new LoginUserVO();
+        BeanUtils.copyProperties(user, loginUserVO);
+
+        //生成token
+        String token = UUID.randomUUID().toString();;
+        //加盐生成tokenKey
+        String tokenKey = LOGIN_USER_KEY + SALT + token + loginUserVO.getId();
+
+        session.setAttribute("token", tokenKey);
+
+        //将用户信息保存在redis
+        String id = String.valueOf(loginUserVO.getId());
+        stringRedisTemplate.opsForValue().set(tokenKey, id);
+        stringRedisTemplate.expire(tokenKey, LOGIN_USER_TTL, TimeUnit.MINUTES); //设置过期时间
+
+        loginUserVO.setUserToken(token);
+
+        return loginUserVO;
+    }
+
+
+    @Override
+    public long userEmailRegister(String emailNum, String emailCaptcha) {
+        if (!emailCodeValid(emailNum, emailCaptcha)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"邮箱格式或邮箱验证码错误!!!");
+        }
+
+        //2.校验邮箱是否已经注册过
+        synchronized (emailNum.intern()) {
+            // 账户不能重复
+            QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+            queryWrapper.eq("email",emailNum);
+            long count = this.baseMapper.selectCount(queryWrapper);
+            if (count > 0) {
+                throw new BusinessException(ErrorCode.PARAMS_ERROR,"邮箱已经注册过了！！！账号重复");
+            }
+
+            //给用户分配调用接口的公钥和私钥ak,sk，保证复杂的同时要保证唯一
+            String accessKey = DigestUtil.md5Hex(SALT+emailNum+ RandomUtil.randomNumbers(5));
+            String secretKey = DigestUtil.md5Hex(SALT+emailNum+ RandomUtil.randomNumbers(8));
+
+            // 3. 插入数据
+            User user = new User();
+            user.setAccessKey(accessKey);
+            user.setSecretKey(secretKey);
+            user.setUserAccount(emailNum);
+            user.setEmail(emailNum);
+            boolean saveResult = this.save(user);
+            if (!saveResult) {
+                throw new BusinessException(ErrorCode.SYSTEM_ERROR, "注册失败，数据库错误");
+            }
+            return user.getId();
+        }
+    }
+
+    @Override
+    public boolean uploadFileAvatar(MultipartFile file, HttpServletRequest request) {
+        User loginUser = this.getLoginUser(request);
+
+        //更新持久层用户头像信息
+        User updateUser = new User();
+        updateUser.setId(loginUser.getId());
+        String url = null;
+        try {
+            url = "http://api.ggaoda.cn/" + QiniuUtils.QiniuCloudUploadImage(file).toString();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        updateUser.setAvatarUrl(url);
+        boolean result = this.updateById(updateUser);
+
+        //更新用户缓存
+        loginUser.setAvatarUrl(url);
+
+
+        // 3. 记录用户的登录态
+        HttpSession session = request.getSession();
+        session.setAttribute(UserConstant.USER_LOGIN_STATE, loginUser);
+
+
+        LoginUserVO loginUserVO = new LoginUserVO();
+        BeanUtils.copyProperties(loginUser, loginUserVO);
+
+        //生成token
+        String token = UUID.randomUUID().toString();;
+        //加盐生成tokenKey
+        String tokenKey = LOGIN_USER_KEY + SALT + token + loginUserVO.getId();
+
+        session.setAttribute("token", tokenKey);
+
+        //将用户信息保存在redis
+        String id = String.valueOf(loginUserVO.getId());
+        stringRedisTemplate.opsForValue().set(tokenKey, id);
+        stringRedisTemplate.expire(tokenKey, LOGIN_USER_TTL, TimeUnit.MINUTES); //设置过期时间
+
+        loginUserVO.setUserToken(token);
+
+        return result;
+    }
+
+    @Override
+    public boolean updateUser(UserUpdateRequest userUpdateRequest, HttpServletRequest request) {
+
+        //允许用户修改自己的信息，但拒绝用户修改别人的信息；但管理员可以修改别人的信息
+        User loginUser = this.getLoginUser(request);
+        Long id = userUpdateRequest.getId();
+        if (!loginUser.getId().equals(id)){
+            if (!loginUser.getRole().equals(UserRoleEnum.ADMIN.getValue())){
+                throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+            }
+        }
+
+        User user = new User();
+        BeanUtils.copyProperties(userUpdateRequest, user);
+        boolean result = this.updateById(user);
+        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+
+        //修改完要更新用户缓存
+        loginUser.setUsername(userUpdateRequest.getUsername());
+        loginUser.setGender(userUpdateRequest.getGender());
+        // 3. 记录用户的登录态
+        HttpSession session = request.getSession();
+        session.setAttribute(UserConstant.USER_LOGIN_STATE, user);
+
+
+        LoginUserVO loginUserVO = new LoginUserVO();
+        BeanUtils.copyProperties(user, loginUserVO);
+
+        //生成token
+        String token = UUID.randomUUID().toString();;
+        //加盐生成tokenKey
+        String tokenKey = LOGIN_USER_KEY + SALT + token + loginUserVO.getId();
+
+        session.setAttribute("token", tokenKey);
+
+        //将用户信息保存在redis
+        stringRedisTemplate.opsForValue().set(tokenKey, String.valueOf(id));
+        stringRedisTemplate.expire(tokenKey, LOGIN_USER_TTL, TimeUnit.MINUTES); //设置过期时间
+
+        loginUserVO.setUserToken(token);
+
+        return true;
+    }
+
+
+
+    private UserDevKeyVO genKey(String userAccount){
+        String accessKey = DigestUtil.md5Hex(SALT + userAccount + RandomUtil.randomNumbers(5));
+        String secretKey = DigestUtil.md5Hex(SALT + userAccount + RandomUtil.randomNumbers(8));
+        UserDevKeyVO userDevKeyVO = new UserDevKeyVO();
+        userDevKeyVO.setAccessKey(accessKey);
+        userDevKeyVO.setSecretKey(secretKey);
+        return userDevKeyVO;
+    }
+
+    /**
+     * 邮箱验证码校验
+     * @param emailNum
+     * @param emailCode
+     * @return
+     */
+    private boolean emailCodeValid(String emailNum, String emailCode) {
+        String code = stringRedisTemplate.opsForValue().get(LOGINCODEPRE + emailNum);
+        if (StringUtils.isBlank(code)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "邮箱格式或邮箱验证码错误!!!");
+        }
+
+        if (!emailCode.equals(code)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "邮箱格式或邮箱验证码错误!!!");
+        }
+
+        return true;
+    }
+
 
 
 }

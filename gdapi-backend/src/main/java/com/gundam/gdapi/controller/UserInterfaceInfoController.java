@@ -7,12 +7,15 @@ import com.gundam.gdapi.common.*;
 import com.gundam.gdapi.constant.CommonConstant;
 import com.gundam.gdapi.constant.UserConstant;
 import com.gundam.gdapi.exception.BusinessException;
+import com.gundam.gdapi.model.dto.userInterfaceInfo.UpdateUserInterfaceInfoDTO;
 import com.gundam.gdapi.model.dto.userInterfaceInfo.UserInterfaceInfoAddRequest;
 import com.gundam.gdapi.model.dto.userInterfaceInfo.UserInterfaceInfoQueryRequest;
 import com.gundam.gdapi.model.dto.userInterfaceInfo.UserInterfaceInfoUpdateRequest;
 import com.gundam.gdapi.model.vo.UserInterfaceInfoVO;
+import com.gundam.gdapi.service.InterfaceChargingService;
 import com.gundam.gdapi.service.UserInterfaceInfoService;
 import com.gundam.gdapi.service.UserService;
+import com.gundam.gdapicommon.model.entity.InterfaceCharging;
 import com.gundam.gdapicommon.model.entity.User;
 import com.gundam.gdapicommon.model.entity.UserInterfaceInfo;
 import lombok.extern.slf4j.Slf4j;
@@ -39,6 +42,9 @@ public class UserInterfaceInfoController {
 
     @Resource
     private UserService userService;
+
+    @Resource
+    private InterfaceChargingService interfaceChargingService;
 
 
 
@@ -207,7 +213,41 @@ public class UserInterfaceInfoController {
     }
 
 
+    /**
+     * 给用户分配免费的调用次数
+     * @param updateUserInterfaceInfoDTO
+     * @param request
+     * @return
+     */
+    @PostMapping("/get/free")
+    public BaseResponse<Boolean> getFreeInterfaceCount(@RequestBody UpdateUserInterfaceInfoDTO updateUserInterfaceInfoDTO, HttpServletRequest request) {
+        Long interfaceId = updateUserInterfaceInfoDTO.getInterfaceId();
+        Long userId = updateUserInterfaceInfoDTO.getUserId();
+        Long lockNum = updateUserInterfaceInfoDTO.getLockNum();
+        if (interfaceId == null || userId == null || lockNum == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        if (lockNum > 100) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "您一次性获取的次数太多了");
+        }
+        synchronized (userId) {
+            User loginUser = userService.getLoginUser(request);
+            if (!userId.equals(loginUser.getId())) {
+                throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+            }
+            long interfaceCharging = interfaceChargingService.count(new QueryWrapper<InterfaceCharging>().eq("interfaceId", interfaceId));
+            if (interfaceCharging > 0) {
+                throw new BusinessException(ErrorCode.PARAMS_ERROR, "这个是付费接口噢!");
+            }
+            UserInterfaceInfo one = userInterfaceInfoService.getOne(new QueryWrapper<UserInterfaceInfo>().eq("userId", userId).eq("interfaceInfoId", interfaceId));
+            if (one != null && one.getLeftNum() >= 1000) {
+                throw new BusinessException(ErrorCode.OPERATION_ERROR, "您获取的次数太多了");
+            }
 
+            boolean b = userInterfaceInfoService.updateUserInterfaceInfo(updateUserInterfaceInfoDTO);
+            return ResultUtils.success(b);
+        }
+    }
 
 
 

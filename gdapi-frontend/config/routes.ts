@@ -43,4 +43,14 @@
     icon: 'containerOutlined',
     component: './Order',
   },
+  {
+    path: '/myInterface',
+    name: '我的接口',
+    icon: 'appstoreOutlined',
+    component: './User/MyInterface',
+  },
+  {
+    path: '/user',
+    routes: [{ name: '个人信息', path: '/user/info', component: './User/Info' }],
+  },
 ];

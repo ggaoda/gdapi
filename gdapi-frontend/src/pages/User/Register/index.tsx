@@ -1,7 +1,7 @@
 import Footer from '@/components/Footer';
 import { getFakeCaptcha } from '@/services/ant-design-pro/login';
 import {
-  AlipayCircleOutlined,
+  AlipayCircleOutlined, ArrowRightOutlined,
   LockOutlined,
   MobileOutlined,
   TaobaoCircleOutlined,
@@ -20,9 +20,16 @@ import {Alert, Divider, message, Tabs} from 'antd';
 import React, { useState } from 'react';
 import { flushSync } from 'react-dom';
 import Settings from '../../../../config/defaultSettings';
-import {userLoginUsingPOST, userRegisterUsingPOST} from "@/services/gdapi-backend/userController";
+import {
+  userLoginUsingPOST,
+  userRegisterUsingPOST,
+  getCaptchaUsingGET,
+  sendCodeUsingGET, userEmailRegisterUsingPOST
+} from "@/services/gdapi-backend/userController";
 import {AO_TE_MAN} from "@/constant";
 import {Link} from "umi";
+import { randomStr } from '@antfu/utils';
+
 const ActionIcons = () => {
   const langClassName = useEmotionCss(({ token }) => {
     return {
@@ -77,8 +84,57 @@ const LoginMessage: React.FC<{
 };
 const Register: React.FC = () => {
   const [userLoginState, setUserLoginState] = useState<API.LoginResult>({});
-  const [type, setType] = useState<string>('account');
+  const [type, setType] = useState<string>('register');
   const { initialState, setInitialState } = useModel('@@initialState');
+
+
+  const [imageUrl, setImageUrl] = useState<any>(null);
+
+  /**
+   * 获取图形验证码
+   */
+  const getCaptcha = async () => {
+    let randomString;
+    const temp = localStorage.getItem('api-open-platform-randomString');
+    if (temp) {
+      randomString = temp;
+    } else {
+      randomString = randomStr(
+        32,
+        '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ',
+      );
+      localStorage.setItem('api-open-platform-randomString', randomString);
+    }
+    console.log(randomString)
+    //携带浏览器请求标识
+    const res = await getCaptchaUsingGET({
+      headers: {
+        signature: randomString
+      },
+      responseType: 'blob', //必须指定为'blob'
+    });
+    let url = window.URL.createObjectURL(res);
+    setImageUrl(url);
+  };
+
+
+  React.useEffect(() => {
+
+    const fetchData = async () => {
+      await getCaptcha();
+    }
+    fetchData();
+
+    // 空数组只调用一次
+    return () => {};
+
+  }, []);
+
+
+
+
+
+
   const containerClassName = useEmotionCss(() => {
     return {
       display: 'flex',
@@ -109,11 +165,19 @@ const Register: React.FC = () => {
     }
     try {
       // 注册
-
-      const id = await userRegisterUsingPOST(values);
-
-
-      if (id) {
+      const signature = localStorage.getItem("api-open-platform-randomString")
+      let res;
+      if (type === 'register') {
+        res = await userRegisterUsingPOST(values,{
+          headers: {
+            "signature": signature
+          },
+        });
+      } else {
+        res = await userEmailRegisterUsingPOST({...values});
+      }
+      console.log(res);
+      if (res.data) {
         const defaultRegisterSuccessMessage = '注册成功！';
         message.success(defaultRegisterSuccessMessage);
 
@@ -165,13 +229,18 @@ const Register: React.FC = () => {
             await handleSubmit(values as API.UserRegisterRequest);
           }}
         >
-          <Tabs activeKey={type} onChange={setType}>
-            <Tabs.TabPane key="account" tab={'账号密码注册'} />
-
-          </Tabs>
-
-
-          {type === 'account' && (
+          <Tabs activeKey={type} onChange={setType} centered items={[ {
+            key: 'register',
+            label: '账号密码注册',
+          },
+            {
+              key: 'emailRegister',
+              label: 'QQ邮箱注册',
+            },]} />
+          {status === 'error' && loginType === 'register' && (
+            <LoginMessage content={'验证码错误!'} />
+          )}
+          {type === 'register' && (
             <>
               <ProFormText
                 name="userAccount"
@@ -242,9 +311,117 @@ const Register: React.FC = () => {
                 ]}
               />
 
+              <div style={{ display: 'flex' }}>
+                <ProFormText
+                  fieldProps={{
+                    autoComplete:"off",
+                    size: 'large',
+                    prefix: <ArrowRightOutlined className={'prefixIcon'} />,
+                  }}
+                  name="captcha"
+                  placeholder={'请输入右侧验证码'}
+                  rules={[
+                    {
+                      required: true,
+                      message: '请输入图形验证码！',
+                    },
+                    {
+                      pattern: /^[0-9]\d{3}$/,
+                      message: '验证码格式错误！',
+                    },
+                  ]}
+                />
+                <img
+                  src={imageUrl}
+                  onClick={getCaptcha}
+                  style={{ marginLeft: 18 }}
+                  width="100px"
+                  height="39px"
+                />
+              </div>
+
+            </>
+          )}
+          {status === 'error' && loginType === 'emailRegister' && (
+            <LoginMessage content={'验证码错误!'} />
+          )}
+          {type === 'emailRegister' && (
+            <>
+              <ProFormText
+                fieldProps={{
+                  size: 'large',
+                  prefix: <MobileOutlined   />,
+                }}
+                name="emailNum"
+                placeholder={'请输入QQ邮箱！'}
+                rules={[
+                  {
+                    required: true,
+                    message: '邮箱是必填项！',
+                  },
+                  {
+                    // pattern: /^1\d{10}$/,    手机号码正则表达式
+                    pattern: /^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/,
+                    message: '不合法的邮箱！',
+                  },
+                ]}
+              />
+              <ProFormCaptcha
+                fieldProps={{
+                  size: 'large',
+                  prefix: <LockOutlined  />,
+                }}
+                captchaProps={{
+                  size: 'large',
+                }}
+                placeholder={'请输入验证码！'}
+                captchaTextRender={(timing, count) => {
+                  if (timing) {
+                    return `${count} ${'秒后重新获取'}`;
+                  }
+                  return '获取验证码';
+                }}
+                name="emailCaptcha"
+                phoneName="emailNum"
+                rules={[
+                  {
+                    required: true,
+                    message: '验证码是必填项！',
+                  },
+                ]}
+                onGetCaptcha={async (emailNum) => {
+                  const captchaType:string = 'register';
+                  const result = await sendCodeUsingGET({
+                    emailNum,
+                    captchaType,
+                  });
+                  if (result.data === false) {
+                    return;
+                  }
+                  message.success(result.message);
+                }}
+              />
             </>
           )}
 
+
+
+
+          <div
+            style={{
+              marginBottom: 24,
+            }}
+          >
+            <Link
+              style={{
+                marginBottom: 24,
+                float: 'right'
+              }}
+              to={'/user/login'}
+            >
+              已有帐号，去登陆！
+            </Link>
+          </div>
         </LoginForm>
       </div>
       <Footer />

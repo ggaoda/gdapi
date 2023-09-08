@@ -9,6 +9,8 @@ import com.gundam.gdapi.common.ErrorCode;
 import com.gundam.gdapi.constant.UserConstant;
 import com.gundam.gdapi.exception.BusinessException;
 import com.gundam.gdapi.mapper.UserInterfaceInfoMapper;
+import com.gundam.gdapi.model.dto.userInterfaceInfo.UpdateUserInterfaceInfoDTO;
+import com.gundam.gdapi.model.vo.InterfaceInfoVO;
 import com.gundam.gdapi.model.vo.UserInterfaceInfoVO;
 import com.gundam.gdapi.service.InterfaceInfoService;
 import com.gundam.gdapi.service.UserInterfaceInfoService;
@@ -18,6 +20,7 @@ import com.gundam.gdapicommon.model.entity.User;
 import com.gundam.gdapicommon.model.entity.UserInterfaceInfo;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -131,6 +134,85 @@ public class UserInterfaceInfoServiceImpl extends ServiceImpl<UserInterfaceInfoM
             return userInterfaceInfoVO;
         }).collect(Collectors.toList());
         return userInterfaceInfoVOList;
+    }
+
+    @Override
+    public boolean recoverInvokeCount(long userId, long interfaceInfoId) {
+        if (userId<0 || interfaceInfoId<0){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"用户或接口不存在");
+        }
+        UpdateWrapper<UserInterfaceInfo> updateWrapper = new UpdateWrapper<>();
+        updateWrapper.eq("userId",userId);
+        updateWrapper.eq("interfaceInfoId",interfaceInfoId);
+        updateWrapper.gt("leftNum",0);
+        updateWrapper.setSql("totalNum = totalNum -1,leftNum = leftNum+1,version = version+1");
+        return this.update(updateWrapper);
+    }
+
+    @Override
+    public int getLeftInvokeCount(long userId, long interfaceInfoId) {
+        //1.根据用户id和接口id获取用户接口关系详情对象
+        QueryWrapper<UserInterfaceInfo> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("userId",userId);
+        queryWrapper.eq("interfaceInfoId",interfaceInfoId);
+        UserInterfaceInfo userInterfaceInfo = userInterfaceInfoMapper.selectOne(queryWrapper);
+        //2.从用户接口关系详情对象中获取剩余调用次数
+        return userInterfaceInfo.getLeftNum();    }
+
+    @Override
+    public boolean updateUserInterfaceInfo(UpdateUserInterfaceInfoDTO updateUserInterfaceInfoDTO) {
+        Long userId = updateUserInterfaceInfoDTO.getUserId();
+        Long interfaceId = updateUserInterfaceInfoDTO.getInterfaceId();
+        Long lockNum = updateUserInterfaceInfoDTO.getLockNum();
+
+        if(interfaceId == null || userId == null || lockNum == null){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+
+        UserInterfaceInfo one = this.getOne(
+                new QueryWrapper<UserInterfaceInfo>()
+                        .eq("userId", userId)
+                        .eq("interfaceInfoId", interfaceId)
+        );
+
+        if (one != null) {
+            // 说明是增加数量
+            return this.update(
+                    new UpdateWrapper<UserInterfaceInfo>()
+                            .eq("userId", userId)
+                            .eq("interfaceInfoId", interfaceId)
+                            .setSql("leftNum = leftNum + " + lockNum)
+            );
+        } else {
+            // 说明是第一次购买
+            UserInterfaceInfo userInterfaceInfo = new UserInterfaceInfo();
+            userInterfaceInfo.setUserId(userId);
+            userInterfaceInfo.setInterfaceInfoId(interfaceId);
+            userInterfaceInfo.setLeftNum(Math.toIntExact(lockNum));
+            return this.save(userInterfaceInfo);
+        }
+    }
+
+    @Override
+    public List<InterfaceInfoVO> interfaceInvokeTopAnalysis(int limit) {
+        List<UserInterfaceInfo> userInterfaceInfoList = userInterfaceInfoMapper.listTopInvokeInterfaceInfo(limit);
+        Map<Long, List<UserInterfaceInfo>> interfaceInfoIdObjMap = userInterfaceInfoList.stream()
+                .collect(Collectors.groupingBy(UserInterfaceInfo::getInterfaceInfoId));
+        QueryWrapper<InterfaceInfo> queryWrapper = new QueryWrapper<>();
+        queryWrapper.in("id", interfaceInfoIdObjMap.keySet());
+        List<InterfaceInfo> list = interfaceInfoService.list(queryWrapper);
+        if (CollectionUtils.isEmpty(list)) {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR);
+        }
+
+        List<InterfaceInfoVO> interfaceInfoVOList = list.stream().map(interfaceInfo -> {
+            InterfaceInfoVO interfaceInfoVO = new InterfaceInfoVO();
+            BeanUtils.copyProperties(interfaceInfo, interfaceInfoVO);
+            int totalNum = interfaceInfoIdObjMap.get(interfaceInfo.getId()).get(0).getTotalNum();
+            interfaceInfoVO.setTotalNum(totalNum);
+            return interfaceInfoVO;
+        }).collect(Collectors.toList());
+        return interfaceInfoVOList;
     }
 
 

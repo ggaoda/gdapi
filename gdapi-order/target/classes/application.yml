@@ -54,7 +54,7 @@ mybatis-plus:
 
 dubbo:
   application:
-    name: gdapi-backend
+    name: dubbo
     qosEnableL: true
     qosPort: 33333
     qosAcceptForeignIp: false

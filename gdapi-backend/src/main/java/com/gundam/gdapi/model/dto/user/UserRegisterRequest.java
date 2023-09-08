@@ -37,15 +37,20 @@ public class UserRegisterRequest implements Serializable {
     /**
      * 手机号
      */
-    private String mobile;
+    private String phone;
 
-    /**
-     * 手机验证码
-     */
-    private String code;
-
+//    /**
+//     * 手机验证码
+//     */
+//    private String code;
+//
     /**
      * 图形验证码
      */
     private String captcha;
+
+    private String emailNum;
+
+    private String emailCaptcha;
+
 }

@@ -18,7 +18,7 @@ public class UserUpdateRequest implements Serializable {
     /**
      * 用户昵称
      */
-    private String userName;
+    private String username;
 
     /**
      * 用户头像
@@ -30,6 +30,11 @@ public class UserUpdateRequest implements Serializable {
      * 用户角色：user/admin/ban
      */
     private Integer role;
+
+    /**
+     * 性别
+     */
+    private Integer gender;
 
     private static final long serialVersionUID = 1L;
 }

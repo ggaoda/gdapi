@@ -71,7 +71,8 @@ public class AliPayController {
         AlipayTradePrecreateRequest request = new AlipayTradePrecreateRequest();
         AlipayTradePrecreateModel model = new AlipayTradePrecreateModel();
 
-        request.setNotifyUrl("http://www.chen-code.work:9000/api/third/alipay/notify");
+//        request.setNotifyUrl("http://www.chen-code.work:9000/api/third/alipay/notify");
+        request.setNotifyUrl("");
 
         request.setBizModel(model);
         model.setOutTradeNo(outTradeNo);

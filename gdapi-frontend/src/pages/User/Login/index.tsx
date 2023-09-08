@@ -19,7 +19,12 @@ import {Alert, Divider, message, Tabs} from 'antd';
 import React, { useState } from 'react';
 import { flushSync } from 'react-dom';
 import Settings from '../../../../config/defaultSettings';
-import {userLoginUsingPOST} from "@/services/gdapi-backend/userController";
+import {
+  userLoginUsingPOST,
+  userLoginBySmsUsingPOST,
+  sendCodeUsingGET,
+  getCaptchaUsingGET
+} from "@/services/gdapi-backend/userController";
 import {AO_TE_MAN} from "@/constant";
 import {randomStr} from "@antfu/utils";
 
@@ -155,10 +160,13 @@ const Login: React.FC = () => {
 
   const handleSubmit = async (values: API.UserLoginRequest) => {
     try {
-      // 登录
-      const res = await userLoginUsingPOST({
-        ...values,
-      });
+      let res;
+      if (type === 'account') {
+        res = await userLoginUsingPOST({...values});
+      } else {
+        res = await userLoginBySmsUsingPOST({...values});
+      }
+      console.log(res)
       if (res.data) {
         const urlParams = new URL(window.location.href).searchParams;
         history.push(urlParams.get('redirect') || '/');
@@ -217,8 +225,8 @@ const Login: React.FC = () => {
                 label: '账号密码登录',
               },
               {
-                key: 'mobile',
-                label: '手机号登录',
+                key: 'email',
+                label: '邮箱登录',
               },
             ]}
           />
@@ -264,29 +272,31 @@ const Login: React.FC = () => {
             </>
           )}
 
-          {status === 'error' && loginType === 'mobile' && <LoginMessage content="验证码错误" />}
-          {type === 'mobile' && (
+          {status === 'error' && loginType === 'email' && <LoginMessage content="验证码错误" />}
+          {type === 'email' && (
             <>
               <ProFormText
                 fieldProps={{
                   size: 'large',
                   prefix: <MobileOutlined />,
                 }}
-                name="mobile"
-                placeholder={'请输入手机号！'}
+                name="emailNum"
+                placeholder={'请输入邮箱！'}
                 rules={[
                   {
                     required: true,
-                    message: '手机号是必填项！',
+                    message: '邮箱是必填项！',
                   },
                   {
-                    pattern: /^1\d{10}$/,
-                    message: '不合法的手机号！',
+                    // pattern: /^1\d{10}$/,    手机号码正则表达式
+                    pattern: /^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/,
+                    message: '不合法的邮箱！',
                   },
                 ]}
               />
               <ProFormCaptcha
                 fieldProps={{
+                  autoComplete:"new-password",
                   size: 'large',
                   prefix: <LockOutlined />,
                 }}
@@ -300,25 +310,25 @@ const Login: React.FC = () => {
                   }
                   return '获取验证码';
                 }}
-                name="captcha"
+                name="emailCaptcha"
+                phoneName="emailNum"
                 rules={[
                   {
                     required: true,
                     message: '验证码是必填项！',
                   },
                 ]}
-                onGetCaptcha={async (phone) => {
-                  const result = await getFakeCaptcha({
-                    phone,
+                onGetCaptcha={async (emailNum) => {
+                  const captchaType:string = 'login';
+                  const result = await sendCodeUsingGET({
+                    emailNum,
+                    captchaType,
                   });
-                  if (!result) {
+                  if (result.data === false) {
                     return;
                   }
-                  message.success('获取验证码成功！验证码为：1234');
+                  message.success(result.data);
                 }}
-
-
-
 
 
 
@@ -327,166 +337,6 @@ const Login: React.FC = () => {
           )}
 
 
-          {type === 'register' && (
-            <>
-              <ProFormText
-                fieldProps={{
-                  size: 'large',
-                  prefix: <UserOutlined />,
-                }}
-                name="userAccount"
-                placeholder={'账号'}
-                rules={[
-                  {
-                    required: true,
-                    message: '请输入账号！',
-                  },
-                  {
-                    min:4,
-                    message:'账号长度不能小于4'
-                  }
-                ]}
-              />
-              <ProFormText.Password
-                name="userPassword"
-                fieldProps={{
-                  size: 'large',
-                  prefix: <LockOutlined />,
-                }}
-                placeholder={intl.formatMessage({
-                  id: 'pages.login.password.placeholder',
-                  defaultMessage: '密码',
-                })}
-                rules={[
-                  {
-                    required: true,
-                    message: (
-                      <FormattedMessage
-                        id="pages.login.password.required"
-                        defaultMessage="请输入密码！"
-                      />
-                    ),
-                  },
-                  {
-                    min:8,
-                    message:'密码长度不能小于8'
-                  }
-                ]}
-              />
-              <ProFormText.Password
-                name="checkPassword"
-                fieldProps={{
-                  size: 'large',
-                  prefix: <LockOutlined />,
-                }}
-                placeholder={intl.formatMessage({
-                  id: 'pages.login.password.placeholder',
-                  defaultMessage: '确认密码',
-                })}
-                rules={[
-                  {
-                    validator(role,value){
-                      if (value !==formRef.current?.getFieldValue("userPassword")){
-                        return Promise.reject("两次密码输入不一致")
-                      }
-                      return Promise.resolve()
-                    },
-                  }
-                ]}
-              />
-              <ProFormText
-                fieldProps={{
-                  size: 'large',
-                  prefix: <MobileOutlined className={'prefixIcon'} />,
-                }}
-                name="mobile"
-                placeholder={'手机号'}
-                rules={[
-                  {
-                    required: true,
-                    message: '请输入手机号！',
-                  },
-                  {
-                    pattern: /^1[3-9]\d{9}$/,
-                    message: '手机号格式错误！',
-                  },
-                ]}
-              />
-              <ProFormCaptcha
-                fieldProps={{
-                  size: 'large',
-                  prefix: <LockOutlined className={'prefixIcon'} />,
-                }}
-                captchaProps={{
-                  size: 'large',
-                }}
-                placeholder={'请输入验证码'}
-                captchaTextRender={(timing, count) => {
-                  if (timing) {
-                    return `${count} ${'后重新获取'}`;
-                  }
-                  return '获取验证码';
-                }}
-                name="code"
-                // 手机号的 name，onGetCaptcha 会注入这个值
-                phoneName="mobile"
-                rules={[
-                  {
-                    required: true,
-                    message: '请输入验证码！',
-                  },
-                  {
-                    pattern: /^[0-9]\d{4}$/,
-                    message: '验证码格式错误！',
-                  },
-                ]}
-                onGetCaptcha={async (mobile) => {
-                  //获取验证成功后才会进行倒计时
-                  try {
-                    const result = await captchaUsingGET({
-                      mobile,
-                    });
-                    if (!result) {
-                      return;
-                    }
-                    message.success(result.data);
-                  }catch (e) {
-                  }
-                }}
-              />
-              <div style={{display:"flex"}}>
-                <ProFormText
-                  fieldProps={{
-                    size: 'large',
-                    prefix: <LockOutlined className={'prefixIcon'} />,
-                  }}
-                  name="captcha"
-                  placeholder={'请输入右侧验证码'}
-                  rules={[
-                    {
-                      required: true,
-                      message: '请输入图形验证码！',
-                    },
-                    {
-                      pattern: /^[0-9]\d{3}$/,
-                      message: '验证码格式错误！',
-                    },
-                  ]}
-                />
-                <img src={imageUrl} onClick={getCaptcha} style={{marginLeft:18}} width="100px" height="39px"/>
-              </div>
-              <Vertify
-                width={320}
-                height={160}
-                visible={visible}
-                // 默认可以不用设置
-                // imgUrl={'/失落深渊葬礼2_4k_b1c03.jpg'}
-                onSuccess={handleRegisterSubmit}
-                // onFail={() => alert('fail')}
-                // onRefresh={() => alert('refresh')}
-              />
-            </>
-          )}
 
           <div
             style={{

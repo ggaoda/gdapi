@@ -20,19 +20,6 @@ public class CorsConfig implements WebMvcConfigurer {
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;
-//    @Override
-//    public void addCorsMappings(CorsRegistry registry) {
-//        // 覆盖所有请求
-//        registry.addMapping("/**")
-//                // 允许发送 Cookie
-//                .allowCredentials(true)
-//                // 放行哪些域名（必须用 patterns，否则 * 会和 allowCredentials 冲突）
-//                .allowedOriginPatterns("*")
-//                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-//                .allowedHeaders("*")
-//                .exposedHeaders("*");
-//    }
-
 
 
     @Override
@@ -48,7 +35,14 @@ public class CorsConfig implements WebMvcConfigurer {
                 "/interfaceInfo/list/page",
                 "/v2/api-docs",
                 "/user/interface/**",
-                "/user/order/**"
+                "/user/order/**",
+                "/user/loginBySms",
+                "/user/getCaptcha",
+                "/third/alipay/**",
+                "/interfaceInfo/sdk",
+                "/user/smsCaptcha",
+                "/user/email/register",
+                "/user/update/avatar"
 
         ).order(2);
 

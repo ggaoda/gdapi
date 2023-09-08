@@ -42,7 +42,7 @@ import static com.gundam.gdapicommon.constant.RabbitmqConstant.ROUTING_KEY_INTER
  */
 @Slf4j
 @Component
-public class InterfaceInvokeFilter implements GatewayFilter, Ordered {
+public class    InterfaceInvokeFilter implements GatewayFilter, Ordered {
 
     @DubboReference
     private InnerUserService innerUserService;

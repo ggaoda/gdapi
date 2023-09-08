@@ -38,6 +38,13 @@ public interface InnerInterfaceInfoService {
      */
     boolean updateInterfaceStock(long interfaceId,Integer num);
 
+    /**
+     * 订单支付超时，回滚库存
+     * @param interfaceId
+     * @param num
+     * @return
+     */
+    boolean recoverInterfaceStock(long interfaceId,Integer num);
 
 
 }

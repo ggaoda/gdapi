@@ -1,33 +1,48 @@
 package com.gundam.gdapi.controller;
+import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.gson.Gson;
 import com.gundam.gdapi.annotation.AuthCheck;
 import com.gundam.gdapi.common.*;
 import com.gundam.gdapi.constant.CommonConstant;
+import com.gundam.gdapi.constant.UserConstant;
 import com.gundam.gdapi.exception.BusinessException;
 import com.gundam.gdapi.model.dto.interfaceInfo.InterfaceInfoAddRequest;
 import com.gundam.gdapi.model.dto.interfaceInfo.InterfaceInfoInvokeRequest;
 import com.gundam.gdapi.model.dto.interfaceInfo.InterfaceInfoQueryRequest;
 import com.gundam.gdapi.model.dto.interfaceInfo.InterfaceInfoUpdateRequest;
 import com.gundam.gdapi.model.enums.InterfaceInfoStatusEnum;
+import com.gundam.gdapi.model.vo.InterfaceInfoVO;
+import com.gundam.gdapi.service.InterfaceChargingService;
 import com.gundam.gdapi.service.InterfaceInfoService;
 import com.gundam.gdapi.service.UserInterfaceInfoService;
 import com.gundam.gdapi.service.UserService;
 import com.gundam.gdapiclientsdk.client.GdApiClient;
+import com.gundam.gdapicommon.model.entity.InterfaceCharging;
 import com.gundam.gdapicommon.model.entity.InterfaceInfo;
 import com.gundam.gdapicommon.model.entity.User;
 import com.gundam.gdapicommon.model.entity.UserInterfaceInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Objects;
+
+import static com.gundam.gdapi.constant.CommonConstant.SALT;
+import static com.gundam.gdapi.constant.UserConstant.LOGIN_USER_KEY;
 
 
 /**
@@ -52,6 +67,12 @@ public class InterfaceInfoController {
 
     @Resource
     private GdApiClient gdApiClient;
+
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
+
+    @Resource
+    private InterfaceChargingService interfaceChargingService;
 
 
 
@@ -219,7 +240,6 @@ public class InterfaceInfoController {
      * @return
      */
     @PostMapping("/invoke")
-    @AuthCheck(mustRole = 1)
     public BaseResponse<Object> invokeInterfaceInfo(@RequestBody InterfaceInfoInvokeRequest interfaceInfoInvokeRequest,
                                                     HttpServletRequest request) {
         // 1. 判断调用的接口是否存在 正确
@@ -258,6 +278,7 @@ public class InterfaceInfoController {
         return ResultUtils.success(res);
 
     }
+
 
 
 
@@ -333,6 +354,21 @@ public class InterfaceInfoController {
 //    }
 
 
+//    /**
+//     * 根据 id 获取
+//     *
+//     * @param id
+//     * @return
+//     */
+//    @GetMapping("/get")
+//    public BaseResponse<InterfaceInfo> getInterfaceInfoById(long id) {
+//        if (id <= 0) {
+//            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+//        }
+//        InterfaceInfo interfaceInfo = interfaceInfoService.getById(id);
+//        return ResultUtils.success(interfaceInfo);
+//    }
+
     /**
      * 根据 id 获取
      *
@@ -340,12 +376,52 @@ public class InterfaceInfoController {
      * @return
      */
     @GetMapping("/get")
-    public BaseResponse<InterfaceInfo> getInterfaceInfoById(long id) {
+    public BaseResponse<InterfaceInfoVO> getInterfaceInfoById(long id, HttpServletRequest request) {
         if (id <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
+//        Long userId = JwtUtils.getUserIdByToken(request);
+        // 先判断是否已登录
+        Object userObj = request.getSession().getAttribute(UserConstant.USER_LOGIN_STATE);
+        User currentUser = (User) userObj;
+        if (currentUser == null || currentUser.getId() == null) {
+            throw  new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
+        //从请求头中获取token
+        String token = request.getHeader("x-auth-token");
+        if (StrUtil.isBlank(token)) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
+
+        String userToken = SALT + token + currentUser.getId();
+        String tokenKey = LOGIN_USER_KEY + userToken;
+
+        String userId = stringRedisTemplate.opsForValue().get(tokenKey);
+        if (StrUtil.isEmpty(userId)) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
         InterfaceInfo interfaceInfo = interfaceInfoService.getById(id);
-        return ResultUtils.success(interfaceInfo);
+        LambdaQueryWrapper<InterfaceCharging> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(InterfaceCharging::getInterfaceid, id);
+        InterfaceCharging interfaceCharging = interfaceChargingService.getOne(queryWrapper);
+        InterfaceInfoVO interfaceInfoVO = new InterfaceInfoVO();
+        BeanUtils.copyProperties(interfaceInfo, interfaceInfoVO);
+        if (interfaceCharging != null) {
+            //获取付费剩余调用次数
+            interfaceInfoVO.setCharging(interfaceCharging.getCharging());
+//            interfaceInfoVO.setAvailablePieces(interfaceCharging.getAvailablePieces());
+            interfaceInfoVO.setChargingId(interfaceCharging.getId());
+        }
+        //获取免费剩余调用次数
+        QueryWrapper<UserInterfaceInfo> userInterfaceInfoQueryWrapper = new QueryWrapper<>();
+        userInterfaceInfoQueryWrapper.eq("userId",userId);
+        userInterfaceInfoQueryWrapper.eq("interfaceInfoId", id);
+        UserInterfaceInfo userInterfaceInfo = userInterfaceInfoService.getOne(userInterfaceInfoQueryWrapper);
+        if (userInterfaceInfo!=null){
+            interfaceInfoVO.setAvailablePieces(userInterfaceInfo.getLeftNum().toString());
+        }
+
+        return ResultUtils.success(interfaceInfoVO);
     }
 
     /**
@@ -402,7 +478,31 @@ public class InterfaceInfoController {
 
 
 
+    @GetMapping("/sdk")
+    public void getSdk(HttpServletResponse response) throws IOException {
+        // 获取要下载的文件
+        org.springframework.core.io.Resource resource = new ClassPathResource("gdapi-client-sdk-0.0.1.jar");
+        InputStream inputStream = resource.getInputStream();
 
+        // 设置响应头
+        response.setContentType("application/octet-stream");
+        response.setHeader("Content-Disposition", "attachment; filename=gdapi-client-sdk-0.0.1.jar");
+
+        // 将文件内容写入响应
+        try (OutputStream out = response.getOutputStream()) {
+            byte[] buffer = new byte[4096];
+            int length;
+            while ((length = inputStream.read(buffer)) > 0) {
+                out.write(buffer, 0, length);
+            }
+            out.flush();
+        } catch (IOException e) {
+            // 处理异常
+            e.printStackTrace();
+        } finally {
+            inputStream.close();
+        }
+    }
 
 
 

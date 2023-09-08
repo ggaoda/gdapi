@@ -67,5 +67,13 @@ public class InnerInterfaceInfoServiceImpl implements InnerInterfaceInfoService 
         return interfaceChargingService.update(updateWrapper);
     }
 
+    @Override
+    public boolean recoverInterfaceStock(long interfaceId, Integer num) {
+        UpdateWrapper<InterfaceCharging> updateWrapper = new UpdateWrapper<>();
+        updateWrapper.setSql("availablePieces = availablePieces + "+num)
+                .eq("interfaceId",interfaceId);
+        return interfaceChargingService.update(updateWrapper);
+    }
+
 
 }

@@ -40,7 +40,7 @@ public class InterfaceCharging implements Serializable {
     /**
      * 创建人
      */
-    private Long userId;
+    private Long userid;
 
     /**
      * 创建时间

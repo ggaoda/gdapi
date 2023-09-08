@@ -69,7 +69,7 @@ const Index: React.FC = () => {
                   <Descriptions.Item label="已调用次数">{item.totalNum}</Descriptions.Item>
                   <Descriptions.Item label="总调用次数">{item.leftNum}</Descriptions.Item>
                   <Descriptions.Item label="调用状态">
-                    {!item.status ? <Tag color="red">禁用</Tag> : <Tag color="green">正常</Tag>}
+                    {!item.status ? <Tag color="green">正常</Tag> : <Tag color="red">禁用</Tag>}
                   </Descriptions.Item>
                 </Descriptions>
               </Collapse.Panel>

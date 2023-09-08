@@ -9,20 +9,17 @@
         <outputRelativeToContentRoot value="true" />
         <module name="gdapi-order" />
         <module name="gdapi-gateway" />
+        <module name="gdapi-third-party" />
         <module name="gdapi-interface" />
         <module name="gdapi-common" />
         <module name="gdapi-backend" />
         <module name="gdapi-client-sdk" />
-        <module name="api-third-party" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel target="8">
-      <module name="gdapi-third-party" target="1.8" />
-    </bytecodeTargetLevel>
+    <bytecodeTargetLevel target="8" />
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
-      <module name="api-third-party" options="-parameters" />
       <module name="gdapi-backend" options="-parameters" />
       <module name="gdapi-client-sdk" options="-parameters" />
       <module name="gdapi-common" options="-parameters" />

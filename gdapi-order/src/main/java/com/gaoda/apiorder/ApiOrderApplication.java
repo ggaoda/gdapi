@@ -10,7 +10,6 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @SpringBootApplication
 @EnableDubbo
 @EnableTransactionManagement
-@EnableRedisHttpSession(flushMode = FlushMode.IMMEDIATE)
 public class ApiOrderApplication {
 
     public static void main(String[] args) {

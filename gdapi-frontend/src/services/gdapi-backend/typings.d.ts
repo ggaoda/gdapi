@@ -1,13 +1,19 @@
 declare namespace API {
+  type BaseResponse = {
+    code?: number;
+    data?: Record<string, any>;
+    message?: string;
+  };
+
   type BaseResponseBoolean_ = {
     code?: number;
     data?: boolean;
     message?: string;
   };
 
-  type BaseResponseInterfaceInfo_ = {
+  type BaseResponseInterfaceInfoVO_ = {
     code?: number;
-    data?: InterfaceInfo;
+    data?: InterfaceInfoVO;
     message?: string;
   };
 
@@ -20,6 +26,12 @@ declare namespace API {
   type BaseResponseListInterfaceInfoVO_ = {
     code?: number;
     data?: InterfaceInfoVO[];
+    message?: string;
+  };
+
+  type BaseResponseListOrderVO_ = {
+    code?: number;
+    data?: OrderVO[];
     message?: string;
   };
 
@@ -59,12 +71,6 @@ declare namespace API {
     message?: string;
   };
 
-  type BaseResponsePageUser_ = {
-    code?: number;
-    data?: PageUser_;
-    message?: string;
-  };
-
   type BaseResponsePageUserInterfaceInfo_ = {
     code?: number;
     data?: PageUserInterfaceInfo_;
@@ -80,6 +86,12 @@ declare namespace API {
   type BaseResponseUser_ = {
     code?: number;
     data?: User;
+    message?: string;
+  };
+
+  type BaseResponseUserDevKeyVO_ = {
+    code?: number;
+    data?: UserDevKeyVO;
     message?: string;
   };
 
@@ -178,6 +190,9 @@ declare namespace API {
   };
 
   type InterfaceInfoVO = {
+    availablePieces?: string;
+    charging?: number;
+    chargingId?: number;
     createTime?: string;
     description?: string;
     id?: number;
@@ -230,6 +245,19 @@ declare namespace API {
     userId?: number;
   };
 
+  type listUserByPageUsingGETParams = {
+    createTime?: string;
+    current?: number;
+    id?: number;
+    pageSize?: number;
+    phoneNum?: string;
+    role?: number;
+    sortField?: string;
+    sortOrder?: string;
+    updateTime?: string;
+    userName?: string;
+  };
+
   type listUserInterfaceInfoByPageUsingGETParams = {
     current?: number;
     id?: number;
@@ -259,9 +287,11 @@ declare namespace API {
   type LoginUserVO = {
     avatarUrl?: string;
     createTime?: string;
+    gender?: number;
     id?: number;
     role?: number;
     updateTime?: string;
+    userAccount?: string;
     userToken?: string;
     username?: string;
   };
@@ -269,6 +299,20 @@ declare namespace API {
   type OrderItem = {
     asc?: boolean;
     column?: string;
+  };
+
+  type OrderVO = {
+    charging?: number;
+    createTime?: string;
+    expirationTime?: string;
+    interfaceDesc?: string;
+    interfaceId?: number;
+    interfaceName?: string;
+    orderNumber?: string;
+    status?: number;
+    total?: number;
+    totalAmount?: number;
+    userId?: number;
   };
 
   type PageInterfaceInfo_ = {
@@ -279,19 +323,6 @@ declare namespace API {
     orders?: OrderItem[];
     pages?: number;
     records?: InterfaceInfo[];
-    searchCount?: boolean;
-    size?: number;
-    total?: number;
-  };
-
-  type PageUser_ = {
-    countId?: string;
-    current?: number;
-    maxLimit?: number;
-    optimizeCountSql?: boolean;
-    orders?: OrderItem[];
-    pages?: number;
-    records?: User[];
     searchCount?: boolean;
     size?: number;
     total?: number;
@@ -323,6 +354,19 @@ declare namespace API {
     total?: number;
   };
 
+  type sendCodeUsingGETParams = {
+    /** captchaType */
+    captchaType: string;
+    /** emailNum */
+    emailNum: string;
+  };
+
+  type UpdateUserInterfaceInfoDTO = {
+    interfaceId?: number;
+    lockNum?: number;
+    userId?: number;
+  };
+
   type User = {
     accessKey?: string;
     avatarUrl?: string;
@@ -347,6 +391,11 @@ declare namespace API {
     userAccount?: string;
     userAvatar?: string;
     userName?: string;
+  };
+
+  type UserDevKeyVO = {
+    accessKey?: string;
+    secretKey?: string;
   };
 
   type UserInterfaceInfo = {
@@ -389,25 +438,31 @@ declare namespace API {
   };
 
   type UserLoginRequest = {
+    emailCaptcha?: string;
+    emailNum?: string;
     userAccount?: string;
     userPassword?: string;
   };
 
   type UserQueryRequest = {
+    createTime?: string;
     current?: number;
     id?: number;
     pageSize?: number;
+    phoneNum?: string;
     role?: number;
     sortField?: string;
     sortOrder?: string;
+    updateTime?: string;
     userName?: string;
   };
 
   type UserRegisterRequest = {
     captcha?: string;
     checkPassword?: string;
-    code?: string;
-    mobile?: string;
+    emailCaptcha?: string;
+    emailNum?: string;
+    phone?: string;
     userAccount?: string;
     userPassword?: string;
     vipCode?: string;
@@ -419,6 +474,7 @@ declare namespace API {
   };
 
   type UserUpdateRequest = {
+    gender?: number;
     id?: number;
     role?: number;
     userAvatar?: string;
