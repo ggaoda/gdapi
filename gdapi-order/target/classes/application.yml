@@ -55,9 +55,6 @@ mybatis-plus:
 dubbo:
   application:
     name: dubbo
-    qosEnableL: true
-    qosPort: 33333
-    qosAcceptForeignIp: false
   protocol:
     name: dubbo
     port: -1

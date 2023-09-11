@@ -5,7 +5,7 @@ server:
 
 spring:
   application:
-    name: api-third-party
+    name: gdapi-third-party
     cloud:
       nacos:
         discovery:

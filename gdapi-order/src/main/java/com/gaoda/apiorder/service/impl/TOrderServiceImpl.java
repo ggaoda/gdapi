@@ -54,8 +54,6 @@ public class TOrderServiceImpl extends ServiceImpl<TOrderMapper, Order>
     @DubboReference
     private InnerUserInterfaceInfoService innerUserInterfaceInfoService;
 
-//    @DubboReference
-//    private ApiBackendService apiBackendService;
 
 
     @Resource
@@ -109,7 +107,6 @@ public class TOrderServiceImpl extends ServiceImpl<TOrderMapper, Order>
         }
 
         InterfaceInfo interfaceInfo = innerInterfaceInfoService.getInterfaceById(interfaceId);
-//        InterfaceInfo interfaceInfo = apiBackendService.getInterfaceById(interfaceId);
         if (interfaceInfo == null){
             throw new BusinessException(ErrorCode.PARAMS_ERROR,"接口不存在");
         }
